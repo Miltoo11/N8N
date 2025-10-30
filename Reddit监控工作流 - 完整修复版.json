@@ -19,12 +19,44 @@
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw/edit#gid=8228757"
         },
         "columns": {
-          "mappingMode": "autoMapInputData",
-          "value": {},
+          "mappingMode": "defineBelow",
+          "value": {
+            "关键词": "={{ $json.关键词 }}",
+            "链接": "={{ $json.链接 }}",
+            "平台": "={{ $json.平台 }}",
+            "频道": "={{ $json.频道 }}",
+            "post_id": "={{ $json.post_id }}",
+            "score": "={{ $json.score }}",
+            "upvote_ratio": "={{ $json.upvote_ratio }}",
+            "评论数": "={{ $json.评论数 }}",
+            "post发布日期": "={{ $json.post发布日期 }}",
+            "标题": "={{ $json.标题 }}",
+            "原文": "={{ $json.原文 }}",
+            "作者": "={{ $json.作者 }}",
+            "情绪分析": "={{ $json.情绪分析 }}",
+            "情绪分析分数": "={{ $json.情绪分析分数 }}",
+            "痛点": "={{ $json.痛点 }}",
+            "用户需求": "={{ $json.用户需求 }}",
+            "竞对提及": "={{ $json.竞对提及 }}",
+            "紧急程度": "={{ $json.紧急程度 }}",
+            "主题类别": "={{ $json.主题类别 }}",
+            "商业机会": "={{ $json.商业机会 }}",
+            "转化潜力": "={{ $json.转化潜力 }}",
+            "seo关键词": "={{ $json.seo关键词 }}",
+            "中文总结": "={{ $json.中文总结 }}",
+            "linkedin创意": "={{ $json.linkedin创意 }}",
+            "twitter创意": "={{ $json.twitter创意 }}",
+            "facebook创意": "={{ $json.facebook创意 }}",
+            "instagram创意": "={{ $json.instagram创意 }}",
+            "tiktok创意": "={{ $json.tiktok创意 }}",
+            "youtube标题": "={{ $json.youtube标题 }}",
+            "blog标题": "={{ $json.blog标题 }}",
+            "热度分数": "={{ $json.热度分数 }}",
+            "趋势": "={{ $json.趋势 }}",
+            "互动率": "={{ $json.互动率 }}"
+          },
           "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": true,
-          "convertFieldsToString": false
+          "schema": []
         },
         "options": {}
       },
@@ -33,7 +65,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4832,
+        5280,
         1440
       ],
       "credentials": {
@@ -45,21 +77,21 @@
     },
     {
       "parameters": {
-        "jsCode": "// 合并AI分析和原始数据\nconst items = $input.all();\nconst output = [];\n\ntry {\n  if (!items || items.length === 0) {\n    console.log('⚠️ 没有输入数据');\n    return [];\n  }\n\n  for (let i = 0; i < items.length; i++) {\n    try {\n      const item = items[i];\n      const data = item.json || {};\n      \n      let aiAnalysis = {\n        sentiment: '未分析',\n        sentiment_score: 0,\n        pain_points: '',\n        user_needs: '',\n        competitor_mention: '',\n        urgency: '低',\n        topic_category: '',\n        business_opportunity: '',\n        conversion_potential: '低',\n        seo_keywords: '',\n        chinese_summary: ''\n      };\n      \n      // 解析Gemini HTTP响应\n      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {\n        try {\n          const text = data.candidates[0].content.parts[0].text;\n          const cleanText = text.replace(/```json\\n?|```\\n?/g, '').trim();\n          const jsonMatch = cleanText.match(/\\{[\\s\\S]*\\}/);\n          if (jsonMatch) {\n            const parsed = JSON.parse(jsonMatch[0]);\n            aiAnalysis = { ...aiAnalysis, ...parsed };\n          }\n        } catch (e) {\n          console.log(`AI响应解析失败[${i+1}]:`, e.message);\n        }\n      }\n      \n      output.push({\n        关键词: data.keyword || '',\n        链接: data.permalink || '',\n        平台: 'Reddit',\n        频道: data.subreddit || '',\n        post_id: data.post_id || '',\n        score: data.score || 0,\n        upvote_ratio: data.upvote_ratio || 0,\n        评论数: data.num_comments || 0,\n        post发布日期: data.post_date || '',\n        标题: data.title || '',\n        原文: data.selftext || '',\n        作者: data.author || '',\n        情绪分析: aiAnalysis.sentiment,\n        情绪分析分数: aiAnalysis.sentiment_score,\n        痛点: aiAnalysis.pain_points,\n        用户需求: aiAnalysis.user_needs,\n        竞对提及: aiAnalysis.competitor_mention,\n        紧急程度: aiAnalysis.urgency,\n        主题类别: aiAnalysis.topic_category,\n        商业机会: aiAnalysis.business_opportunity,\n        转化潜力: aiAnalysis.conversion_potential,\n        seo关键词: aiAnalysis.seo_keywords,\n        中文总结: aiAnalysis.chinese_summary,\n        热度分数: data.final_hot_score || 0,\n        趋势: (data.score || 0) > 100 ? '上升' : '平稳',\n        互动率: Math.round((data.engagement_rate || 0) * 10000) / 100 + '%'\n      });\n    } catch (itemError) {\n      console.log(`处理项目 ${i+1} 时出错:`, itemError.message);\n      // 继续处理下一项\n      continue;\n    }\n  }\n\n  console.log(`✅ 合并 ${output.length} 条结果`);\n  return output.map(item => ({ json: item }));\n} catch (error) {\n  console.log('❌ 合并过程出错:', error.message);\n  return [];\n}"
+        "jsCode": "// ========================================\n// 合并AI分析结果与原始Reddit数据\n// ========================================\n\nconst items = $input.all();\nconst output = [];\n\nif (!items || items.length === 0) {\n  console.log('⚠️ 没有输入数据');\n  return [];\n}\n\nfor (let i = 0; i < items.length; i++) {\n  try {\n    const item = items[i];\n    const data = item.json || {};\n    \n    // 初始化AI分析字段(默认值)\n    let aiAnalysis = {\n      情绪分析: '未分析',\n      情绪分析分数: 0,\n      痛点: '',\n      用户需求: '',\n      竞对提及: '',\n      紧急程度: '低',\n      主题类别: '',\n      商业机会: '',\n      转化潜力: '低',\n      seo关键词: '',\n      中文总结: '',\n      linkedin创意: '',\n      twitter创意: '',\n      facebook创意: '',\n      instagram创意: '',\n      tiktok创意: '',\n      youtube标题: '',\n      blog标题: ''\n    };\n    \n    // 解析Gemini HTTP响应\n    if (data.gemini_response) {\n      try {\n        const geminiData = typeof data.gemini_response === 'string' \n          ? JSON.parse(data.gemini_response) \n          : data.gemini_response;\n          \n        if (geminiData.candidates && geminiData.candidates[0]?.content?.parts?.[0]?.text) {\n          const text = geminiData.candidates[0].content.parts[0].text;\n          // 移除markdown代码块标记\n          const cleanText = text.replace(/```json\\n?|```\\n?/g, '').trim();\n          // 提取JSON对象\n          const jsonMatch = cleanText.match(/\\{[\\s\\S]*\\}/);\n          if (jsonMatch) {\n            const parsed = JSON.parse(jsonMatch[0]);\n            aiAnalysis = { ...aiAnalysis, ...parsed };\n          }\n        }\n      } catch (e) {\n        console.log(`AI响应解析失败[${i+1}]:`, e.message);\n      }\n    }\n    \n    // 构建最终输出(保持所有字段在一行)\n    output.push({\n      json: {\n        // 基础信息\n        关键词: data.关键词 || data.keyword || '',\n        链接: data.链接 || data.permalink || '',\n        平台: 'Reddit',\n        频道: data.频道 || data.subreddit || data.subreddit_actual || '',\n        post_id: data.post_id || '',\n        score: data.score || 0,\n        upvote_ratio: data.upvote_ratio || 0,\n        评论数: data.评论数 || data.num_comments || 0,\n        post发布日期: data.post发布日期 || data.post_date || '',\n        标题: data.标题 || data.title || '',\n        原文: data.原文 || data.selftext || '',\n        作者: data.作者 || data.author || '',\n        \n        // AI分析结果\n        情绪分析: aiAnalysis.情绪分析 || aiAnalysis.sentiment || '未分析',\n        情绪分析分数: aiAnalysis.情绪分析分数 || aiAnalysis.sentiment_score || 0,\n        痛点: aiAnalysis.痛点 || aiAnalysis.pain_points || '',\n        用户需求: aiAnalysis.用户需求 || aiAnalysis.user_needs || '',\n        竞对提及: aiAnalysis.竞对提及 || aiAnalysis.competitor_mention || '',\n        紧急程度: aiAnalysis.紧急程度 || aiAnalysis.urgency || '低',\n        主题类别: aiAnalysis.主题类别 || aiAnalysis['主题/类别'] || aiAnalysis.topic_category || '',\n        商业机会: aiAnalysis.商业机会 || aiAnalysis.business_opportunity || '',\n        转化潜力: aiAnalysis.转化潜力 || aiAnalysis.conversion_potential || '低',\n        seo关键词: aiAnalysis.seo关键词 || aiAnalysis.seo_keywords || '',\n        中文总结: aiAnalysis.中文总结 || aiAnalysis.chinese_summary || '',\n        \n        // 社交媒体创意\n        linkedin创意: aiAnalysis.linkedin创意 || '',\n        twitter创意: aiAnalysis.twitter创意 || '',\n        facebook创意: aiAnalysis.facebook创意 || '',\n        instagram创意: aiAnalysis.instagram创意 || '',\n        tiktok创意: aiAnalysis.tiktok创意 || '',\n        youtube标题: aiAnalysis.youtube标题 || '',\n        blog标题: aiAnalysis.blog标题 || '',\n        \n        // 业务指标\n        热度分数: data.热度分数 || data.final_hot_score || 0,\n        趋势: data.趋势 || ((data.score || 0) > 100 ? '上升' : '平稳'),\n        互动率: data.互动率 || (Math.round((data.engagement_rate || 0) * 10000) / 100 + '%')\n      }\n    });\n  } catch (itemError) {\n    console.log(`处理项目 ${i+1} 时出错:`, itemError.message);\n    continue;\n  }\n}\n\nconsole.log(`✅ 成功合并 ${output.length} 条结果`);\nreturn output;"
       },
       "id": "372fa46f-00bb-48ac-889a-e6a53aa68a08",
       "name": "合并AI分析结果",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4608,
+        5056,
         1440
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googlePalmApi",
         "sendHeaders": true,
@@ -73,9 +105,9 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": `你是一名拥有20年经验的国际物流与跨境电商领域专家，同时也是资深社交媒体营销顾问。\n请分析以下Reddit帖子，输出一个**完整JSON结构**，必须满足以下要求：\n\n✅ **要求一：保留所有输入字段（原封不动，名称和值均不改）**\n✅ **要求二：在原有字段基础上补充以下AI生成字段：**\n{\n  \"情绪分析\": \"正面/中性/负面\",\n  \"情绪分析分数\": 0-100,\n  \"痛点\": \"用户主要痛点\",\n  \"用户需求\": \"隐含需求\",\n  \"竞对提及\": \"提及的竞对或替代方案\",\n  \"紧急程度\": \"高/中/低\",\n  \"主题/类别\": \"帖子主题分类（如物流、清关、仓储、供应链、税务等）\",\n  \"商业机会\": \"潜在商机（如服务、产品或内容机会）\",\n  \"转化潜力\": \"高/中/低\",\n  \"seo关键词\": \"从帖子中提炼的英文SEO关键词\",\n  \"中文总结\": \"请用100字以内中文总结帖子核心观点\",\n  \"主题类别\": \"对整体话题进行更高层次分类，如供应链趋势、跨境营销、合规风险等\"\n}\n\n✅ **要求三：在末尾追加以下社交媒体创意输出字段（AI生成）：**\n{\n  \"linkedin创意\": \"生成一条LinkedIn帖子内容（专业、洞察、真实语气）\",\n  \"twitter创意\": \"生成一条280字符以内英文推文（自然、有情绪波动）\",\n  \"facebook创意\": \"生成一条中文Facebook贴文（口语化、贴近痛点）\",\n  \"instagram创意\": \"生成一条适合视觉画面的IG文案（带情绪与话题标签）\",\n  \"tiktok创意\": \"生成一条15秒中文TikTok短视频脚本（含画面与旁白）\",\n  \"youtube标题\": \"生成一个吸引点击的英文YouTube标题\",\n  \"blog标题\": \"生成一个SEO优化的中文博客标题\"\n}\n\n⚠️ 输出规则：\n- 输出一个单一JSON对象。\n- 不要使用Markdown、代码块、注释或解释。\n- 保留所有输入字段，并在其后附加AI生成字段。\n\n---\n\n以下是帖子信息（请全部保留）：\n关键词：${ $json.关键词 }\n频道：${ $json.频道 }\n标题：${ $json.标题 }\n正文：${ $json.原文 }\n作者：${ $json.作者 }\n链接：${ $json.链接 }\n得分：${ $json.score }\n评论数：${ $json.评论数 }\n互动率：${ $json.互动率 }\n发布日期：${ $json.post发布日期 }\n热度分数：${ $json.热度分数 }\n趋势：${ $json.趋势 }\n\n⚠️ 请仅返回完整JSON对象，不要额外内容。` }] }], \"generationConfig\": { \"temperature\": 0.35 } }}",
+        "jsonBody": "={\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": \"你是一名拥有20年经验的国际物流与跨境电商领域专家,同时也是资深社交媒体营销顾问。\\n\\n请分析以下Reddit帖子,输出一个JSON对象,包含以下字段:\\n\\n1. 情绪分析: 正面/中性/负面\\n2. 情绪分析分数: 0-100的数字\\n3. 痛点: 用户主要痛点描述\\n4. 用户需求: 隐含需求分析\\n5. 竞对提及: 提及的竞争对手或替代方案\\n6. 紧急程度: 高/中/低\\n7. 主题类别: 帖子主题分类(如物流、清关、仓储、供应链、税务等)\\n8. 商业机会: 潜在商业机会描述\\n9. 转化潜力: 高/中/低\\n10. seo关键词: 从帖子中提炼的英文SEO关键词(逗号分隔)\\n11. 中文总结: 100字以内的中文总结\\n12. linkedin创意: 生成一条LinkedIn帖子内容(专业、洞察、真实语气)\\n13. twitter创意: 生成一条280字符以内英文推文\\n14. facebook创意: 生成一条中文Facebook贴文(口语化、贴近痛点)\\n15. instagram创意: 生成一条适合视觉画面的IG文案(带情绪与话题标签)\\n16. tiktok创意: 生成一条15秒中文TikTok短视频脚本(含画面与旁白)\\n17. youtube标题: 生成一个吸引点击的英文YouTube标题\\n18. blog标题: 生成一个SEO优化的中文博客标题\\n\\n帖子信息:\\n关键词: {{ $json.关键词 }}\\n频道: {{ $json.频道 }}\\n标题: {{ $json.标题 }}\\n正文: {{ $json.原文 }}\\n作者: {{ $json.作者 }}\\n链接: {{ $json.链接 }}\\n得分: {{ $json.score }}\\n评论数: {{ $json.评论数 }}\\n互动率: {{ $json.互动率 }}\\n发布日期: {{ $json.post发布日期 }}\\n热度分数: {{ $json.热度分数 }}\\n\\n请仅返回JSON对象,不要其他内容。\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.35,\n    \"maxOutputTokens\": 2048\n  }\n}",
         "options": {
-          "timeout": 2000
+          "timeout": 30000
         }
       },
       "id": "3db755ca-0957-4961-ad49-ec0ddef9d93f",
@@ -83,7 +115,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        5056,
+        4832,
         1440
       ],
       "retryOnFail": true,
@@ -91,10 +123,6 @@
       "alwaysOutputData": true,
       "waitBetweenTries": 5000,
       "credentials": {
-        "oAuth2Api": {
-          "id": "lO4WvhGgGX7w097r",
-          "name": "My Reddit OAuth2 Credential"
-        },
         "googlePalmApi": {
           "id": "uqjB3InnwzDc16HQ",
           "name": "Google Gemini(PaLM) Api account"
@@ -103,7 +131,21 @@
     },
     {
       "parameters": {
-        "amount": 2
+        "jsCode": "// 将Gemini响应附加到原数据\nconst items = $input.all();\n\nif (items.length === 0) {\n  return [];\n}\n\n// 获取原始数据(input 1)和Gemini响应(input 2)\nconst originalData = items[0]?.json || {};\nconst geminiResponse = items[1]?.json || {};\n\nreturn [{\n  json: {\n    ...originalData,\n    gemini_response: geminiResponse\n  }\n}];"
+      },
+      "id": "merge-gemini-data",
+      "name": "附加Gemini响应",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5056,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
       },
       "id": "7f085f1b-9cf3-49a3-8cf3-3bae3976e82d",
       "name": "等待2秒AI限速",
@@ -117,6 +159,7 @@
     },
     {
       "parameters": {
+        "batchSize": 1,
         "options": {}
       },
       "id": "012f5d8a-fbfe-4931-998f-59b595fa797c",
@@ -130,7 +173,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// =======================================================\n// 🧮 全局排序取 TOP 15（带防空保护）\n// =======================================================\n\nconst items = $input.all();\nif (!items.length) {\n  console.log('⚠️ No input items');\n  return [{ json: { message: 'no posts for sorting' } }];\n}\n\nconst sorted = items.sort((a, b) => {\n  return (b.json.final_hot_score || 0) - (a.json.final_hot_score || 0);\n});\n\nconst top15 = sorted.slice(0, 15);\nconsole.log(`✅ 全局排序完成，输出 TOP ${top15.length}`);\nreturn top15.map(i => ({ json: i.json }));\n"
+        "jsCode": "// =======================================================\n// 🧮 全局排序取 TOP 15(带防空保护)\n// =======================================================\n\nconst items = $input.all();\nif (!items.length) {\n  console.log('⚠️ No input items');\n  return [];\n}\n\nconst sorted = items.sort((a, b) => {\n  return (b.json.final_hot_score || 0) - (a.json.final_hot_score || 0);\n});\n\nconst top15 = sorted.slice(0, 15);\nconsole.log(`✅ 全局排序完成,输出 TOP ${top15.length}`);\nreturn top15;"
       },
       "id": "26f8c74a-48f6-4415-80d9-a6bbbd6c22a2",
       "name": "全局排序TOP15",
@@ -143,7 +186,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 热度计算引擎\nconst items = $input.all();\nconst output = [];\n\nfor (const item of items) {\n  const data = item.json;\n  const score = data.score || 0;\n  const comments = data.num_comments || 0;\n  const upvoteRatio = data.upvote_ratio || 0;\n  const engagementRate = data.engagement_rate || 0;\n  \n  const baseHotScore = (\n    score * 0.4 +\n    comments * 0.3 +\n    upvoteRatio * 100 * 0.2 +\n    engagementRate * 100 * 0.1\n  );\n  \n  let priorityWeight = 1.0;\n  const subredditPriority = data.subreddit_priority || 'C';\n  const keywordPriority = data.keyword_priority || '中';\n  \n  if (subredditPriority === 'S' && keywordPriority === '高') {\n    priorityWeight = 1.5;\n  } else if (subredditPriority === 'S' || keywordPriority === '高') {\n    priorityWeight = 1.2;\n  } else if (subredditPriority === 'A' && keywordPriority === '高') {\n    priorityWeight = 1.3;\n  } else if (subredditPriority === 'A') {\n    priorityWeight = 1.1;\n  }\n  \n  const finalScore = baseHotScore * priorityWeight;\n  \n  output.push({\n    ...data,\n    base_hot_score: Math.round(baseHotScore * 100) / 100,\n    priority_weight: priorityWeight,\n    final_hot_score: Math.round(finalScore * 100) / 100,\n    post_date: data.created_utc ? new Date(data.created_utc * 1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]\n  });\n}\n\nreturn output.map(item => ({ json: item }));"
+        "jsCode": "// =======================================================\n// 热度计算引擎 + 数据标准化\n// =======================================================\n\nconst items = $input.all();\nconst output = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // 跳过空数据或消息类数据\n  if (!data || data.message || !data.post_id) {\n    continue;\n  }\n  \n  const score = Number(data.score) || 0;\n  const comments = Number(data.num_comments) || 0;\n  const upvoteRatio = Number(data.upvote_ratio) || 0;\n  const engagementRate = score > 0 ? (comments / score) : 0;\n  \n  // 计算基础热度分数\n  const baseHotScore = (\n    score * 0.4 +\n    comments * 0.3 +\n    upvoteRatio * 100 * 0.2 +\n    engagementRate * 100 * 0.1\n  );\n  \n  // 计算优先级权重\n  let priorityWeight = 1.0;\n  const subredditPriority = data.subreddit_priority || 'C';\n  const keywordPriority = data.keyword_priority || '中';\n  \n  if (subredditPriority === 'S' && keywordPriority === '高') {\n    priorityWeight = 1.5;\n  } else if (subredditPriority === 'S' || keywordPriority === '高') {\n    priorityWeight = 1.2;\n  } else if (subredditPriority === 'A' && keywordPriority === '高') {\n    priorityWeight = 1.3;\n  } else if (subredditPriority === 'A') {\n    priorityWeight = 1.1;\n  }\n  \n  const finalScore = baseHotScore * priorityWeight;\n  \n  // 标准化输出字段(使用中文表头)\n  output.push({\n    json: {\n      关键词: data.keyword || data.关键词 || '',\n      链接: data.permalink || data.链接 || '',\n      平台: 'Reddit',\n      频道: data.subreddit_actual || data.subreddit || data.频道 || '',\n      post_id: data.post_id || '',\n      score: score,\n      upvote_ratio: upvoteRatio,\n      评论数: comments,\n      post发布日期: data.post_date || '',\n      标题: data.title || data.标题 || '',\n      原文: data.selftext || data.原文 || '',\n      作者: data.author || data.作者 || '',\n      热度分数: Math.round(finalScore * 100) / 100,\n      趋势: score > 100 ? '上升' : '平稳',\n      互动率: Math.round(engagementRate * 10000) / 100 + '%',\n      \n      // 保留原始字段用于后续处理\n      base_hot_score: Math.round(baseHotScore * 100) / 100,\n      final_hot_score: Math.round(finalScore * 100) / 100,\n      priority_weight: priorityWeight,\n      engagement_rate: engagementRate,\n      keyword_priority: keywordPriority,\n      subreddit_priority: subredditPriority\n    }\n  });\n}\n\nconsole.log(`✅ 热度计算完成,共 ${output.length} 条`);\nreturn output;"
       },
       "id": "c75df744-c50b-4b9f-a88f-76dc57f50782",
       "name": "计算热度分数",
@@ -156,7 +199,8 @@
     },
     {
       "parameters": {
-        "amount": 3
+        "amount": 1,
+        "unit": "seconds"
       },
       "id": "8a51110c-874e-45a2-ac3f-f002b80b8118",
       "name": "等待1秒",
@@ -170,6 +214,7 @@
     },
     {
       "parameters": {
+        "batchSize": 1,
         "options": {}
       },
       "id": "08608cdd-856f-4602-8a51-2ae2b91b0b43",
@@ -183,7 +228,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 交叉匹配引擎 - 生成关键词×频道组合\nconst MAX_COMBINATIONS = 50; // Limit total combinations\nconst items = $input.all();\n\nconst keywordItems = [];\nconst subredditItems = [];\n\nfor (const item of items) {\n  const row = item.json || {};\n  if (row.Keyword || row.keyword) {\n    keywordItems.push(item);\n  } else if (row['频道名称'] || row.subreddit) {\n    subredditItems.push(item);\n  }\n}\n\nif (!keywordItems.length || !subredditItems.length) {\n  throw new Error(`数据不足：关键词(${keywordItems.length}) × 频道(${subredditItems.length})`);\n}\n\nconst keywords = [];\nfor (const item of keywordItems) {\n  const row = item.json || {};\n  const rawKeyword = row.Keyword || row.keyword || '';\n  const priority = row['优先级'] || row.priority || '中';\n  const category = row['类别'] || row.category || '';\n  if (!rawKeyword.trim()) continue;\n  const kwList = rawKeyword.split('|').map(k => k.trim()).filter(Boolean);\n  for (const kw of kwList) {\n    keywords.push({ keyword: kw, priority, category });\n  }\n}\n\nconst subreddits = [];\nfor (const item of subredditItems) {\n  const row = item.json || {};\n  const name = row['频道名称'] || row.subreddit || row.name || '';\n  const priority = row['优先级'] || row.priority || 'C';\n  const members = row['成员数'] || row.members || '0';\n  const classification = row['分类'] || row.classification || '';\n  if (!name.trim()) continue;\n  subreddits.push({\n    subreddit: name.replace(/^r\\//, '').trim().replace(/\\s+/g, ''),\n    priority,\n    members,\n    classification\n  });\n}\n\nconsole.log(`📊 关键词: ${keywords.length}, 频道: ${subreddits.length}, 组合: ${keywords.length * subreddits.length}`);\n\nconst combinations = [];\nfor (const kw of keywords) {\n  for (const sr of subreddits) {\n    combinations.push({\n      keyword: kw.keyword,\n      keyword_priority: kw.priority,\n      keyword_category: kw.category,\n      subreddit: sr.subreddit,\n      subreddit_priority: sr.priority,\n      subreddit_members: sr.members,\n      subreddit_classification: sr.classification,\n      search_url: `https://oauth.reddit.com/r/${sr.subreddit}/search?q=${encodeURIComponent(kw.keyword)}&restrict_sr=1&sort=new&limit=25&t=month&include_over_18=1&raw_json=1`\n    });\n  }\n}\n\nconsole.log(`⚠️ 限制组合数: ${Math.min(combinations.length, MAX_COMBINATIONS)}/${combinations.length}`);\nconst limitedCombinations = combinations.slice(0, MAX_COMBINATIONS);\n\nreturn limitedCombinations.map(c => ({ json: c }));"
+        "jsCode": "// =======================================================\n// 交叉匹配引擎 - 生成关键词×频道组合\n// =======================================================\n\nconst MAX_COMBINATIONS = 50;\nconst items = $input.all();\n\nconst keywordItems = [];\nconst subredditItems = [];\n\n// 分离关键词和频道数据\nfor (const item of items) {\n  const row = item.json || {};\n  if (row.Keyword || row.keyword) {\n    keywordItems.push(item);\n  } else if (row['频道名称'] || row.subreddit) {\n    subredditItems.push(item);\n  }\n}\n\nif (!keywordItems.length || !subredditItems.length) {\n  throw new Error(`数据不足:关键词(${keywordItems.length}) × 频道(${subredditItems.length})`);\n}\n\n// 提取关键词列表\nconst keywords = [];\nfor (const item of keywordItems) {\n  const row = item.json || {};\n  const rawKeyword = row.Keyword || row.keyword || '';\n  const priority = row['优先级'] || row.priority || '中';\n  const category = row['类别'] || row.category || '';\n  \n  if (!rawKeyword.trim()) continue;\n  \n  const kwList = rawKeyword.split('|').map(k => k.trim()).filter(Boolean);\n  for (const kw of kwList) {\n    keywords.push({ keyword: kw, priority, category });\n  }\n}\n\n// 提取频道列表\nconst subreddits = [];\nfor (const item of subredditItems) {\n  const row = item.json || {};\n  const name = row['频道名称'] || row.subreddit || row.name || '';\n  const priority = row['优先级'] || row.priority || 'C';\n  const members = row['成员数'] || row.members || '0';\n  const classification = row['分类'] || row.classification || '';\n  \n  if (!name.trim()) continue;\n  \n  subreddits.push({\n    subreddit: name.replace(/^r\\//, '').trim().replace(/\\s+/g, ''),\n    priority,\n    members,\n    classification\n  });\n}\n\nconsole.log(`📊 关键词: ${keywords.length}, 频道: ${subreddits.length}, 总组合: ${keywords.length * subreddits.length}`);\n\n// 生成组合\nconst combinations = [];\nfor (const kw of keywords) {\n  for (const sr of subreddits) {\n    combinations.push({\n      json: {\n        keyword: kw.keyword,\n        keyword_priority: kw.priority,\n        keyword_category: kw.category,\n        subreddit: sr.subreddit,\n        subreddit_priority: sr.priority,\n        subreddit_members: sr.members,\n        subreddit_classification: sr.classification,\n        search_url: `https://oauth.reddit.com/r/${sr.subreddit}/search?q=${encodeURIComponent(kw.keyword)}&restrict_sr=1&sort=new&limit=25&t=week&include_over_18=1&raw_json=1`\n      }\n    });\n  }\n}\n\n// 限制组合数量\nconst limitedCombinations = combinations.slice(0, MAX_COMBINATIONS);\nconsole.log(`✅ 输出组合数: ${limitedCombinations.length}/${combinations.length}`);\n\nreturn limitedCombinations;"
       },
       "id": "8eb81247-ab64-4eae-8bb5-b8e998822665",
       "name": "交叉匹配引擎",
@@ -195,7 +240,11 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
@@ -280,65 +329,23 @@
     },
     {
       "parameters": {
-        "jsCode": "// =======================================================\n// 提取Reddit数据 + 原文兜底 + 时间过滤（可配置）\n// 兼容 HTTP 节点是否开启 “Include Response Headers and Status”\n// - 开启：body 在 item.json.body\n// - 关闭：body 在 item.json\n// 输出：展开为多条帖子 item（每条含原文、自适应兜底与基础指标）\n// 作者：你\n// 模式：Run Once for All Items\n// =======================================================\n\n// ---------- 可配置项 ----------\nconst DEFAULT_DAYS_WINDOW = 7;              // 默认时间窗（天）\nconst MAX_TITLE_LEN = 500;                  // 标题截断防极端\nconst MAX_TEXT_LEN = 20000;                 // 正文截断防极端（字符）\nconst ENABLE_TRIM_HTML = true;              // 当使用 selftext_html 兜底时，是否去标签\n// 从上游可选覆盖：item.json.days_window（数字）\n/*\n  你也可以在上游给每个组合带一个覆盖参数：\n  {\n    ...,\n    \"days_window\": 30\n  }\n*/\n\n// ---------- 取入参 ----------\nconst item = $input.item;\nif (!item || !item.json) {\n  console.log('⚠️ 没有输入数据');\n  return [];\n}\n\n// 请求上下文（从交叉匹配/上游带过来）\nconst requestData = {\n  keyword: item.json.keyword || '',\n  keyword_priority: item.json.keyword_priority || '',\n  keyword_category: item.json.keyword_category || '',\n  subreddit: item.json.subreddit || '',\n  subreddit_priority: item.json.subreddit_priority || '',\n  subreddit_members: item.json.subreddit_members || '',\n  subreddit_classification: item.json.subreddit_classification || ''\n};\n\n// 时间窗配置（允许上游覆盖）\nconst daysWindow = Number(item.json.days_window) > 0\n  ? Number(item.json.days_window)\n  : DEFAULT_DAYS_WINDOW;\n\n// ---------- 兼容 HTTP 节点输出结构 ----------\nconst apiRoot = item.json.body ?? item.json;        // body优先（当 Include Headers=ON）\nconst apiResponse = apiRoot?.data || {};\nif (!apiResponse || typeof apiResponse !== 'object') {\n  console.log('⚠️ API响应数据不存在或结构不正确');\n  return [];\n}\n\nconst posts = Array.isArray(apiResponse.children) ? apiResponse.children : [];\nif (!posts.length) {\n  console.log('ℹ️ 没有找到帖子数据（children 为空）');\n  return [];\n}\n\n// ---------- 工具：简单去HTML标签 ----------\nfunction stripHtml(html) {\n  if (!html || typeof html !== 'string') return '';\n  return html\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>');\n}\n\n// ---------- 主循环 ----------\nconst now = Date.now() / 1000;\nconst cutoff = now - (daysWindow * 24 * 60 * 60);\nconst out = [];\n\nfor (const post of posts) {\n  const d = post?.data || {};\n  const createdUtc = Number(d.created_utc) || 0;\n\n  // 时间过滤\n  if (createdUtc < cutoff) continue;\n\n  // 标题（截断以防极端）\n  let title = typeof d.title === 'string' ? d.title : '';\n  if (title.length > MAX_TITLE_LEN) title = title.slice(0, MAX_TITLE_LEN) + '…';\n\n  // ===== 原文兜底逻辑 =====\n  // 1) 纯文本帖：selftext 优先\n  // 2) selftext为空 → 尝试 selftext_html（可去标签）\n  // 3) 跨帖：crosspost_parent_list[0].selftext\n  // 4) 仍为空：提供 content_fallback_url 以供后续抓取或人工参考\n  let selftext = '';\n  if (typeof d.selftext === 'string' && d.selftext.trim()) {\n    selftext = d.selftext;\n  } else if (typeof d.selftext_html === 'string' && d.selftext_html.trim()) {\n    selftext = ENABLE_TRIM_HTML ? stripHtml(d.selftext_html) : d.selftext_html;\n  } else if (Array.isArray(d.crosspost_parent_list) && d.crosspost_parent_list[0]?.selftext) {\n    selftext = d.crosspost_parent_list[0].selftext;\n  } else {\n    selftext = ''; // 仍为空，走回退URL\n  }\n\n  if (selftext.length > MAX_TEXT_LEN) {\n    selftext = selftext.slice(0, MAX_TEXT_LEN) + '\\n[truncated]';\n  }\n\n  const contentFallbackUrl =\n    d.url_overridden_by_dest || d.url || '';\n\n  // 计算衍生字段\n  const postDateIso = createdUtc ? new Date(createdUtc * 1000).toISOString() : '';\n  const daysAgo = createdUtc ? Math.round((now - createdUtc) / 86400) : null;\n\n  const score = Number(d.score) || 0;\n  const numComments = Number(d.num_comments) || 0;\n  const upvoteRatio = Number(d.upvote_ratio) || 0;\n  const engagementRate = score > 0 ? (numComments / score) : 0;\n\n  // 输出一条帖子\n  out.push({\n    json: {\n      ...requestData,\n      // 贴子基础\n      post_id: d.id || '',\n      title,\n      selftext,                         // ✅ 原文（已兜底）\n      content_fallback_url: contentFallbackUrl,  // ✅ 原文为空时的参考链接\n      author: d.author || '',\n      subreddit_actual: d.subreddit || requestData.subreddit || '',\n      // 统计信息\n      score,\n      upvote_ratio: upvoteRatio,\n      num_comments: numComments,\n      engagement_rate: engagementRate,\n      // 时间\n      created_utc: createdUtc,\n      post_date: postDateIso.split('T')[0] || '',\n      post_date_iso: postDateIso,\n      days_ago: daysAgo,\n      // 链接\n      permalink: d.permalink ? `https://reddit.com${d.permalink}` : '',\n      url: d.url || '',\n      // 便于后续“抓评论”节点调用\n      comments_api: d.id ? `https://oauth.reddit.com/comments/${d.id}.json?limit=50&depth=1&sort=top&raw_json=1` : ''\n    }\n  });\n}\n\nconsole.log(`✅ 成功提取 ${out.length} 条帖子（时间窗：${daysWindow} 天）`);\nconsole.log(`✅ 成功提取 ${out.length} 条帖子（时间窗：${daysWindow} 天）`);\n\n// === 修正输出结构 ===\nif (!out.length) {\n  // 没结果时返回一条空消息，确保结构正确\n  return [{ json: { message: 'no posts found' } }];\n}\n\n// 确保所有元素都有 json 包装\nreturn out.map(i => {\n  if (i && typeof i === 'object' && i.json && typeof i.json === 'object') {\n    return i;\n  }\n  return { json: i || { message: 'invalid item structure' } };\n});\n"
+        "jsCode": "// =======================================================\n// 提取Reddit数据 + 时间过滤 + 数据清洗\n// =======================================================\n\nconst DEFAULT_DAYS_WINDOW = 7;\nconst MAX_TITLE_LEN = 500;\nconst MAX_TEXT_LEN = 20000;\n\nconst item = $input.item;\nif (!item || !item.json) {\n  console.log('⚠️ 没有输入数据');\n  return [];\n}\n\n// 请求上下文\nconst requestData = {\n  keyword: item.json.keyword || '',\n  keyword_priority: item.json.keyword_priority || '',\n  keyword_category: item.json.keyword_category || '',\n  subreddit: item.json.subreddit || '',\n  subreddit_priority: item.json.subreddit_priority || '',\n  subreddit_members: item.json.subreddit_members || '',\n  subreddit_classification: item.json.subreddit_classification || ''\n};\n\n// 时间窗配置\nconst daysWindow = Number(item.json.days_window) > 0 \n  ? Number(item.json.days_window) \n  : DEFAULT_DAYS_WINDOW;\n\n// 获取API响应数据\nconst apiResponse = item.json?.data || {};\nif (!apiResponse || typeof apiResponse !== 'object') {\n  console.log('⚠️ API响应数据不存在或结构不正确');\n  return [];\n}\n\nconst posts = Array.isArray(apiResponse.children) ? apiResponse.children : [];\nif (!posts.length) {\n  console.log('ℹ️ 没有找到帖子数据(children为空)');\n  return [];\n}\n\n// 文本清洗函数\nfunction cleanText(str) {\n  if (!str || typeof str !== 'string') return '';\n  return str\n    .replace(/[\\r\\n]/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction stripHtml(html) {\n  if (!html || typeof html !== 'string') return '';\n  return html\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>');\n}\n\n// 主循环\nconst now = Date.now() / 1000;\nconst cutoff = now - (daysWindow * 24 * 60 * 60);\nconst out = [];\n\nfor (const post of posts) {\n  const d = post?.data || {};\n  const createdUtc = Number(d.created_utc) || 0;\n\n  // 时间过滤\n  if (createdUtc < cutoff) {\n    continue;\n  }\n\n  // 标题清洗\n  let title = cleanText(d.title || '');\n  if (title.length > MAX_TITLE_LEN) {\n    title = title.slice(0, MAX_TITLE_LEN) + '…';\n  }\n\n  // 原文提取(多重兜底)\n  let selftext = '';\n  if (typeof d.selftext === 'string' && d.selftext.trim()) {\n    selftext = cleanText(d.selftext);\n  } else if (typeof d.selftext_html === 'string' && d.selftext_html.trim()) {\n    selftext = cleanText(stripHtml(d.selftext_html));\n  } else if (Array.isArray(d.crosspost_parent_list) && d.crosspost_parent_list[0]?.selftext) {\n    selftext = cleanText(d.crosspost_parent_list[0].selftext);\n  }\n\n  if (selftext.length > MAX_TEXT_LEN) {\n    selftext = selftext.slice(0, MAX_TEXT_LEN) + '\\n[truncated]';\n  }\n\n  // 计算衍生字段\n  const postDateIso = createdUtc ? new Date(createdUtc * 1000).toISOString() : '';\n  const score = Number(d.score) || 0;\n  const numComments = Number(d.num_comments) || 0;\n  const upvoteRatio = Number(d.upvote_ratio) || 0;\n  const engagementRate = score > 0 ? (numComments / score) : 0;\n\n  // 输出一条帖子\n  out.push({\n    json: {\n      ...requestData,\n      post_id: d.id || '',\n      title,\n      selftext,\n      author: d.author || '',\n      subreddit_actual: d.subreddit || requestData.subreddit || '',\n      score,\n      upvote_ratio: upvoteRatio,\n      num_comments: numComments,\n      engagement_rate: engagementRate,\n      created_utc: createdUtc,\n      post_date: postDateIso.split('T')[0] || '',\n      post_date_iso: postDateIso,\n      permalink: d.permalink ? `https://reddit.com${d.permalink}` : '',\n      url: d.url || ''\n    }\n  });\n}\n\nconsole.log(`✅ 成功提取 ${out.length} 条帖子(时间窗:${daysWindow}天)`);\n\nif (!out.length) {\n  return [];\n}\n\nreturn out;"
       },
       "id": "c6574824-a017-4138-b267-f445bc7cbdfa",
       "name": "提取数据和时间过滤",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4384,
-        1248
+        4160,
+        1312
       ],
       "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "jsCode": "// =======================================================\n// 🧠 提取Reddit数据 + 时间过滤（含安全清洗 + 中文表头 + 全字段保留）\n// 功能：\n// - 从上游 Reddit 响应中提取并清洗帖子数据\n// - 保留所有字段，输出符合最终 Google Sheet 表头（中文）\n// - 对标题与正文只保留英文字母、数字、空格和合法标点（, . ? !）\n// 模式：Run Once for Each Item\n// 作者：Cathy IP项目\n// =======================================================\n\nconst item = $input.item;\nif (!item?.json) {\n  return { json: { message: 'no input data' } };\n}\n\nconst d = item.json;\n\n// === 🕒 时间过滤：仅保留7天内帖子 ===\nconst now = Date.now() / 1000;\nconst sevenDaysAgo = now - 7 * 24 * 60 * 60;\nif (d.created_utc && d.created_utc < sevenDaysAgo) {\n  return { json: { message: 'post older than 7 days' } };\n}\n\n// === 🧹 文本清洗函数 ===\n// 仅保留：字母、数字、空格、逗号、句号、问号、感叹号\nfunction cleanText(str) {\n  if (!str) return '';\n  return String(str)\n    .replace(/[\\r\\n]/g, ' ')             // 去除换行\n    .replace(/[^a-zA-Z0-9\\s,\\.?!]/g, '') // 删除除合法标点外的所有字符\n    .replace(/\\s+/g, ' ')                // 压缩多余空格\n    .trim();\n}\n\n// === 🧼 清洗标题与正文 ===\nconst cleanTitle = cleanText(d.title || '');\nconst cleanBody = cleanText(d.selftext || '');\n\n// === ✅ 构建输出（全字段 + 中文表头） ===\nreturn {\n  json: {\n    // ====== 基础信息 ======\n    关键词: d.keyword || '',\n    链接: d.permalink || '',\n    平台: 'Reddit',\n    频道: d.subreddit || d.subreddit_actual || '',\n    post_id: d.post_id || '',\n    score: d.score || 0,\n    upvote_ratio: d.upvote_ratio || 0,\n    评论数: d.num_comments || 0,\n    post发布日期: d.post_date || '',\n    标题: cleanTitle,\n    原文: cleanBody,\n    作者: d.author || '',\n\n    // ====== AI分析类（预留空位） ======\n    情绪分析: '',\n    情绪分析分数: '',\n    痛点: '',\n    用户需求: '',\n    竞对提及: '',\n    紧急程度: '',\n    '主题/类别': '',\n    商业机会: '',\n    转化潜力: '',\n    seo关键词: '',\n    中文总结: '',\n\n    // ====== 社交媒体创意输出（预留空位） ======\n    linkedin创意: '',\n    twitter创意: '',\n    facebook创意: '',\n    instagram创意: '',\n    tiktok创意: '',\n    youtube标题: '',\n    blog标题: '',\n\n    // ====== 业务与数据指标 ======\n    热度分数: d.final_hot_score || d.base_hot_score || 0,\n    趋势: '',\n    互动率: d.engagement_rate || 0,\n\n    // ====== 上游保留的字段 ======\n    keyword_priority: d.keyword_priority || '',\n    keyword_category: d.keyword_category || '',\n    subreddit_priority: d.subreddit_priority || '',\n    subreddit_members: d.subreddit_members || '',\n    subreddit_classification: d.subreddit_classification || '',\n    content_fallback_url: d.content_fallback_url || '',\n    url: d.url || '',\n    comments_api: d.comments_api || '',\n    created_utc: d.created_utc || 0,\n    post_date_iso: d.post_date_iso || '',\n    days_ago: d.days_ago || 0,\n    priority_weight: d.priority_weight || '',\n    extracted_at: new Date().toISOString()\n  }\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        4832,
-        1248
-      ],
-      "id": "ee71c44d-88f6-43fc-8ea2-afb6cd85a8d4",
-      "name": "数据时间过滤"
     },
     {
       "parameters": {
         "url": "={{ $json.search_url }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ $json.keyword }}"
-            },
-            {
-              "name": "restrict_sr",
-              "value": "1"
-            },
-            {
-              "name": "sort",
-              "value": "new"
-            },
-            {
-              "name": "limit",
-              "value": "100"
-            },
-            {
-              "name": "t",
-              "value": "week"
-            },
-            {
-              "name": "q",
-              "value": "={{ $json.subreddit }}"
-            }
-          ]
-        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -354,30 +361,16 @@
               "responseFormat": "json"
             }
           },
-          "pagination": {
-            "pagination": {
-              "parameters": {
-                "parameters": [
-                  {
-                    "name": "after",
-                    "value": "={{ $pageCount === 0 ? '' : $response.body.data?.after }}"
-                  }
-                ]
-              },
-              "paginationCompleteWhen": "other",
-              "completeExpression": "={{ !$response.body.data?.after }}"
-            }
-          },
           "timeout": 10000
         }
       },
       "id": "092ac0d6-5b65-4268-a7dd-f3b7e002caa3",
-      "name": "调用Reddit API1",
+      "name": "调用Reddit API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4160,
-        1088
+        3936,
+        1312
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -408,7 +401,18 @@
       "main": [
         [
           {
-            "node": "AI分析分批",
+            "node": "附加Gemini响应",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "附加Gemini响应": {
+      "main": [
+        [
+          {
+            "node": "合并AI分析结果",
             "type": "main",
             "index": 0
           }
@@ -419,7 +423,7 @@
       "main": [
         [
           {
-            "node": "数据时间过滤",
+            "node": "Gemini分析HTTP",
             "type": "main",
             "index": 0
           }
@@ -430,7 +434,7 @@
       "main": [
         [
           {
-            "node": "合并AI分析结果",
+            "node": "附加Gemini响应",
             "type": "main",
             "index": 0
           }
@@ -470,7 +474,7 @@
       "main": [
         [
           {
-            "node": "调用Reddit API1",
+            "node": "调用Reddit API",
             "type": "main",
             "index": 0
           }
@@ -559,25 +563,14 @@
       "main": [
         [
           {
-            "node": "Reddit分批处理",
+            "node": "计算热度分数",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "数据时间过滤": {
-      "main": [
-        [
-          {
-            "node": "Gemini分析HTTP",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "调用Reddit API1": {
+    "调用Reddit API": {
       "main": [
         [
           {
