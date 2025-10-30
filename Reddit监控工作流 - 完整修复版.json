@@ -73,7 +73,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": `你是一名拥有20年经验的国际物流与跨境电商领域专家，同时也是资深社交媒体营销顾问。\n请分析以下Reddit帖子，输出一个**完整JSON结构**，必须满足以下要求：\n\n✅ **要求一：保留所有输入字段（原封不动，名称和值均不改）**\n✅ **要求二：在原有字段基础上补充以下AI生成字段：**\n{\n  \"情绪分析\": \"正面/中性/负面\",\n  \"情绪分析分数\": 0-100,\n  \"痛点\": \"用户主要痛点\",\n  \"用户需求\": \"隐含需求\",\n  \"竞对提及\": \"提及的竞对或替代方案\",\n  \"紧急程度\": \"高/中/低\",\n  \"主题/类别\": \"帖子主题分类（如物流、清关、仓储、供应链、税务等）\",\n  \"商业机会\": \"潜在商机（如服务、产品或内容机会）\",\n  \"转化潜力\": \"高/中/低\",\n  \"seo关键词\": \"从帖子中提炼的英文SEO关键词\",\n  \"中文总结\": \"请用100字以内中文总结帖子核心观点\",\n  \"主题类别\": \"对整体话题进行更高层次分类，如供应链趋势、跨境营销、合规风险等\"\n}\n\n✅ **要求三：在末尾追加以下社交媒体创意输出字段（AI生成）：**\n{\n  \"linkedin创意\": \"生成一条LinkedIn帖子内容（专业、洞察、真实语气）\",\n  \"twitter创意\": \"生成一条280字符以内英文推文（自然、有情绪波动）\",\n  \"facebook创意\": \"生成一条中文Facebook贴文（口语化、贴近痛点）\",\n  \"instagram创意\": \"生成一条适合视觉画面的IG文案（带情绪与话题标签）\",\n  \"tiktok创意\": \"生成一条15秒中文TikTok短视频脚本（含画面与旁白）\",\n  \"youtube标题\": \"生成一个吸引点击的英文YouTube标题\",\n  \"blog标题\": \"生成一个SEO优化的中文博客标题\"\n}\n\n⚠️ 输出规则：\n- 输出一个单一JSON对象。\n- 不要使用Markdown、代码块、注释或解释。\n- 保留所有输入字段，并在其后附加AI生成字段。\n\n---\n\n以下是帖子信息（请全部保留）：\n关键词：${ $json.关键词 }\n频道：${ $json.频道 }\n标题：${ $json.标题 }\n正文：${ $json.原文 }\n作者：${ $json.作者 }\n链接：${ $json.链接 }\n得分：${ $json.score }\n评论数：${ $json.评论数 }\n互动率：${ $json.互动率 }\n发布日期：${ $json.post发布日期 }\n热度分数：${ $json.热度分数 }\n趋势：${ $json.趋势 }\n\n⚠️ 请仅返回完整JSON对象，不要额外内容。` }] }], \"generationConfig\": { \"temperature\": 0.35 } }}",
+        "jsonBody": "={{ { \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": \"你是一名拥有20年经验的国际物流与跨境电商领域专家，同时也是资深社交媒体营销顾问。\\n请分析以下Reddit帖子，输出一个**完整JSON结构**，必须满足以下要求：\\n\\n✅ **要求一：保留所有输入字段（原封不动，名称和值均不改）**\\n✅ **要求二：在原有字段基础上补充以下AI生成字段：**\\n{\\n  \\\"情绪分析\\\": \\\"正面/中性/负面\\\",\\n  \\\"情绪分析分数\\\": 0-100,\\n  \\\"痛点\\\": \\\"用户主要痛点\\\",\\n  \\\"用户需求\\\": \\\"隐含需求\\\",\\n  \\\"竞对提及\\\": \\\"提及的竞对或替代方案\\\",\\n  \\\"紧急程度\\\": \\\"高/中/低\\\",\\n  \\\"主题/类别\\\": \\\"帖子主题分类（如物流、清关、仓储、供应链、税务等）\\\",\\n  \\\"商业机会\\\": \\\"潜在商机（如服务、产品或内容机会）\\\",\\n  \\\"转化潜力\\\": \\\"高/中/低\\\",\\n  \\\"seo关键词\\\": \\\"从帖子中提炼的英文SEO关键词\\\",\\n  \\\"中文总结\\\": \\\"请用100字以内中文总结帖子核心观点\\\",\\n  \\\"主题类别\\\": \\\"对整体话题进行更高层次分类，如供应链趋势、跨境营销、合规风险等\\\"\\n}\\n\\n✅ **要求三：在末尾追加以下社交媒体创意输出字段（AI生成）：**\\n{\\n  \\\"linkedin创意\\\": \\\"生成一条LinkedIn帖子内容（专业、洞察、真实语气）\\\",\\n  \\\"twitter创意\\\": \\\"生成一条280字符以内英文推文（自然、有情绪波动）\\\",\\n  \\\"facebook创意\\\": \\\"生成一条中文Facebook贴文（口语化、贴近痛点）\\\",\\n  \\\"instagram创意\\\": \\\"生成一条适合视觉画面的IG文案（带情绪与话题标签）\\\",\\n  \\\"tiktok创意\\\": \\\"生成一条15秒中文TikTok短视频脚本（含画面与旁白）\\\",\\n  \\\"youtube标题\\\": \\\"生成一个吸引点击的英文YouTube标题\\\",\\n  \\\"blog标题\\\": \\\"生成一个SEO优化的中文博客标题\\\"\\n}\\n\\n⚠️ 输出规则：\\n- 输出一个单一JSON对象。\\n- 不要使用Markdown、代码块、注释或解释。\\n- 保留所有输入字段，并在其后附加AI生成字段。\\n\\n---\\n\\n以下是帖子信息（请全部保留）：\\n关键词：\" + $json.关键词 + \"\\n频道：\" + $json.频道 + \"\\n标题：\" + $json.标题 + \"\\n正文：\" + $json.原文 + \"\\n作者：\" + $json.作者 + \"\\n链接：\" + $json.链接 + \"\\n得分：\" + $json.score + \"\\n评论数：\" + $json.评论数 + \"\\n互动率：\" + $json.互动率 + \"\\n发布日期：\" + $json.post发布日期 + \"\\n热度分数：\" + $json.热度分数 + \"\\n趋势：\" + $json.趋势 + \"\\n\\n⚠️ 请仅返回完整JSON对象，不要额外内容。\" }] }], \"generationConfig\": { \"temperature\": 0.35 } } }}",
         "options": {
           "timeout": 60000,
           "batching": {
@@ -301,6 +301,69 @@
       "typeVersion": 2,
       "position": [
         4160,
+        1248
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.comments_api }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-reddit-monitor/2.0 (Nathan01531@gmail.com)"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "neverError": false,
+              "fullResponse": false
+            }
+          },
+          "timeout": 15000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "id": "fetch-comments-abc123",
+      "name": "抓取Reddit热评",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4384,
+        1248
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "lO4WvhGgGX7w097r",
+          "name": "My Reddit OAuth2 Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================================\n// 处理Reddit热评数据 - 优化版\n// 功能：提取前10条热评并格式化，完整继承所有上游字段\n// 模式：Run Once for Each Item\n// ========================================================\n\nconst item = $input.item;\nconst data = item.json || {};\n\n// 初始化评论相关变量\nlet commentsText = '';\nlet commentsJSON = [];\nlet commentCount = 0;\nlet avgScore = 0;\n\ntry {\n  // Reddit评论API返回数组，第一个元素是帖子，第二个元素是评论列表\n  if (Array.isArray(data) && data.length > 1) {\n    const commentListing = data[1]?.data?.children || [];\n    \n    // 提取前10条有效评论\n    const validComments = commentListing\n      .filter(c => c.kind === 't1' && c.data)  // 过滤出评论类型\n      .slice(0, 10);  // 只取前10条\n    \n    commentCount = validComments.length;\n    \n    // 格式化评论\n    validComments.forEach((comment, index) => {\n      const c = comment.data;\n      const author = c.author || '[deleted]';\n      const body = (c.body || '').substring(0, 200);  // 限制每条评论200字符\n      const score = c.score || 0;\n      const created = c.created_utc ? new Date(c.created_utc * 1000).toISOString().split('T')[0] : '';\n      \n      // 文本格式（用于Google Sheets显示）\n      commentsText += `${index + 1}. @${author} (${score}👍 ${created}):\\n${body}\\n\\n`;\n      \n      // JSON格式（保留完整数据）\n      commentsJSON.push({\n        rank: index + 1,\n        author,\n        body,\n        score,\n        created_date: created,\n        comment_id: c.id || ''\n      });\n    });\n    \n    // 计算平均点赞数\n    if (commentCount > 0) {\n      const totalScore = commentsJSON.reduce((sum, c) => sum + c.score, 0);\n      avgScore = Math.round(totalScore / commentCount);\n    }\n    \n    console.log(`✅ 成功抓取 ${commentCount} 条热评`);\n  } else {\n    console.log('⚠️ 没有找到评论数据');\n  }\n} catch (error) {\n  console.log(`❌ 评论处理失败: ${error.message}`);\n}\n\n// 获取帖子原始数据（从Reddit API响应的第一个元素）\nlet postData = {};\nif (Array.isArray(data) && data.length > 0) {\n  const postListing = data[0]?.data?.children || [];\n  if (postListing.length > 0) {\n    postData = postListing[0]?.data || {};\n  }\n}\n\n// ✅ 返回结果：完整继承上游字段 + 添加评论字段\nreturn {\n  json: {\n    // ✅ 继承所有原有字段\n    ...postData,\n    \n    // ✅ 添加评论相关字段\n    热门评论数量: commentCount,\n    热门评论文本: commentsText || '暂无评论',\n    热门评论JSON: JSON.stringify(commentsJSON),\n    热门评论平均分: avgScore,\n    \n    // ✅ 确保comments_api字段存在（供后续节点使用）\n    comments_api: postData.id ? `https://oauth.reddit.com/comments/${postData.id}.json?limit=50&depth=1&sort=top&raw_json=1` : ''\n  }\n};"
+      },
+      "id": "process-comments-def456",
+      "name": "处理评论数据",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4608,
         1248
       ],
       "alwaysOutputData": true
@@ -577,6 +640,28 @@
       ]
     },
     "提取数据和时间过滤": {
+      "main": [
+        [
+          {
+            "node": "抓取Reddit热评",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓取Reddit热评": {
+      "main": [
+        [
+          {
+            "node": "处理评论数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "处理评论数据": {
       "main": [
         [
           {
