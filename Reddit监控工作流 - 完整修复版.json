@@ -293,7 +293,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// =======================================================\n// 提取Reddit数据 + 原文兜底 + 时间过滤（可配置）\n// 兼容 HTTP 节点是否开启 “Include Response Headers and Status”\n// - 开启：body 在 item.json.body\n// - 关闭：body 在 item.json\n// 输出：展开为多条帖子 item（每条含原文、自适应兜底与基础指标）\n// 作者：你\n// 模式：Run Once for All Items\n// =======================================================\n\n// ---------- 可配置项 ----------\nconst DEFAULT_DAYS_WINDOW = 7;              // 默认时间窗（天）\nconst MAX_TITLE_LEN = 500;                  // 标题截断防极端\nconst MAX_TEXT_LEN = 20000;                 // 正文截断防极端（字符）\nconst ENABLE_TRIM_HTML = true;              // 当使用 selftext_html 兜底时，是否去标签\n// 从上游可选覆盖：item.json.days_window（数字）\n/*\n  你也可以在上游给每个组合带一个覆盖参数：\n  {\n    ...,\n    \"days_window\": 30\n  }\n*/\n\n// ---------- 取入参 ----------\nconst item = $input.item;\nif (!item || !item.json) {\n  console.log('⚠️ 没有输入数据');\n  return [];\n}\n\n// 从合并数据中提取上游元数据\nconst upstreamData = item.json;\nconst requestData = {\n  keyword: item.json.keyword || '',\n  keyword_priority: item.json.keyword_priority || '',\n  keyword_category: item.json.keyword_category || '',\n  subreddit: item.json.subreddit || '',\n  subreddit_priority: item.json.subreddit_priority || '',\n  subreddit_members: item.json.subreddit_members || '',\n  subreddit_classification: item.json.subreddit_classification || ''\n};\n\n// 时间窗配置（允许上游覆盖）\nconst daysWindow = Number(item.json.days_window) > 0\n  ? Number(item.json.days_window)\n  : DEFAULT_DAYS_WINDOW;\n\n// ---------- 兼容 HTTP 节点输出结构 ----------\nconst apiRoot = item.json.body ?? item.json;        // body优先（当 Include Headers=ON）\nconst apiResponse = apiRoot?.data || {};\nif (!apiResponse || typeof apiResponse !== 'object') {\n  console.log('⚠️ API响应数据不存在或结构不正确');\n  return [];\n}\n\nconst posts = Array.isArray(apiResponse.children) ? apiResponse.children : [];\nif (!posts.length) {\n  console.log('ℹ️ 没有找到帖子数据（children 为空）');\n  return [];\n}\n\n// ---------- 工具：简单去HTML标签 ----------\nfunction stripHtml(html) {\n  if (!html || typeof html !== 'string') return '';\n  return html\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>');\n}\n\n// ---------- 主循环 ----------\nconst now = Date.now() / 1000;\nconst cutoff = now - (daysWindow * 24 * 60 * 60);\nconst out = [];\n\nfor (const post of posts) {\n  const d = post?.data || {};\n  const createdUtc = Number(d.created_utc) || 0;\n\n  // 时间过滤\n  if (createdUtc < cutoff) continue;\n\n  // 标题（截断以防极端）\n  let title = typeof d.title === 'string' ? d.title : '';\n  if (title.length > MAX_TITLE_LEN) title = title.slice(0, MAX_TITLE_LEN) + '…';\n\n  // ===== 原文兜底逻辑 =====\n  // 1) 纯文本帖：selftext 优先\n  // 2) selftext为空 → 尝试 selftext_html（可去标签）\n  // 3) 跨帖：crosspost_parent_list[0].selftext\n  // 4) 仍为空：提供 content_fallback_url 以供后续抓取或人工参考\n  let selftext = '';\n  if (typeof d.selftext === 'string' && d.selftext.trim()) {\n    selftext = d.selftext;\n  } else if (typeof d.selftext_html === 'string' && d.selftext_html.trim()) {\n    selftext = ENABLE_TRIM_HTML ? stripHtml(d.selftext_html) : d.selftext_html;\n  } else if (Array.isArray(d.crosspost_parent_list) && d.crosspost_parent_list[0]?.selftext) {\n    selftext = d.crosspost_parent_list[0].selftext;\n  } else {\n    selftext = ''; // 仍为空，走回退URL\n  }\n\n  if (selftext.length > MAX_TEXT_LEN) {\n    selftext = selftext.slice(0, MAX_TEXT_LEN) + '\\n[truncated]';\n  }\n\n  const contentFallbackUrl =\n    d.url_overridden_by_dest || d.url || '';\n\n  // 计算衍生字段\n  const postDateIso = createdUtc ? new Date(createdUtc * 1000).toISOString() : '';\n  const daysAgo = createdUtc ? Math.round((now - createdUtc) / 86400) : null;\n\n  const score = Number(d.score) || 0;\n  const numComments = Number(d.num_comments) || 0;\n  const upvoteRatio = Number(d.upvote_ratio) || 0;\n  const engagementRate = score > 0 ? (numComments / score) : 0;\n\n  // 输出一条帖子\n  out.push({\n    json: {\n      ...requestData,\n      // 贴子基础\n      post_id: d.id || '',\n      title,\n      selftext,                         // ✅ 原文（已兜底）\n      content_fallback_url: contentFallbackUrl,  // ✅ 原文为空时的参考链接\n      author: d.author || '',\n      subreddit_actual: d.subreddit || requestData.subreddit || '',\n      // 统计信息\n      score,\n      upvote_ratio: upvoteRatio,\n      num_comments: numComments,\n      engagement_rate: engagementRate,\n      // 时间\n      created_utc: createdUtc,\n      post_date: postDateIso.split('T')[0] || '',\n      post_date_iso: postDateIso,\n      days_ago: daysAgo,\n      // 链接\n      permalink: d.permalink ? `https://reddit.com${d.permalink}` : '',\n      url: d.url || '',\n      // 便于后续“抓评论”节点调用\n      comments_api: d.id ? `https://oauth.reddit.com/comments/${d.id}.json?limit=50&depth=1&sort=top&raw_json=1` : ''\n    }\n  });\n}\n\nconsole.log(`✅ 成功提取 ${out.length} 条帖子（时间窗：${daysWindow} 天）`);\nconsole.log(`✅ 成功提取 ${out.length} 条帖子（时间窗：${daysWindow} 天）`);\n\n// === 修正输出结构 ===\nif (!out.length) {\n  // 没结果时返回一条空消息，确保结构正确\n  return [{ json: { message: 'no posts found' } }];\n}\n\n// 确保所有元素都有 json 包装\nreturn out.map(i => {\n  if (i && typeof i === 'object' && i.json && typeof i.json === 'object') {\n    return i;\n  }\n  return { json: i || { message: 'invalid item structure' } };\n});\n"
+        "jsCode": "// 提取Reddit数据 + 时间过滤（使用Merge后的数据）\n// Merge节点已将上游数据和API响应合并\n// Input 1: 上游数据（keyword, subreddit等）\n// Input 2: Reddit API响应\n\nconst item = $input.item;\nif (!item || !item.json) {\n  console.log('没有输入数据');\n  return [];\n}\n\n// Merge节点输出的数据同时包含上游字段和API响应\nconst mergedData = item.json;\n\n// 从merged数据中提取上游元数据\nconst keyword = mergedData.keyword || '';\nconst keyword_priority = mergedData.keyword_priority || '';\nconst keyword_category = mergedData.keyword_category || '';\nconst subreddit = mergedData.subreddit || '';\nconst subreddit_priority = mergedData.subreddit_priority || '';\nconst subreddit_members = mergedData.subreddit_members || '';\nconst subreddit_classification = mergedData.subreddit_classification || '';\n\n// 提取API响应数据\nconst apiData = mergedData.data || mergedData;\nconst posts = Array.isArray(apiData.children) ? apiData.children : [];\n\nif (!posts.length) {\n  console.log('没有找到帖子数据');\n  return [];\n}\n\n// 时间过滤配置\nconst DEFAULT_DAYS_WINDOW = 7;\nconst MAX_TITLE_LEN = 500;\nconst MAX_TEXT_LEN = 20000;\n\nconst now = Date.now() / 1000;\nconst cutoff = now - (DEFAULT_DAYS_WINDOW * 24 * 60 * 60);\nconst out = [];\n\n// 工具函数：去HTML标签\nfunction stripHtml(html) {\n  if (!html || typeof html !== 'string') return '';\n  return html\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>');\n}\n\n// 处理每个帖子\nfor (const post of posts) {\n  const d = post?.data || {};\n  const createdUtc = Number(d.created_utc) || 0;\n\n  // 时间过滤\n  if (createdUtc < cutoff) continue;\n\n  // 提取标题\n  let title = typeof d.title === 'string' ? d.title : '';\n  if (title.length > MAX_TITLE_LEN) title = title.slice(0, MAX_TITLE_LEN) + '…';\n\n  // 提取原文（带兜底）\n  let selftext = '';\n  if (typeof d.selftext === 'string' && d.selftext.trim()) {\n    selftext = d.selftext;\n  } else if (typeof d.selftext_html === 'string' && d.selftext_html.trim()) {\n    selftext = stripHtml(d.selftext_html);\n  } else if (Array.isArray(d.crosspost_parent_list) && d.crosspost_parent_list[0]?.selftext) {\n    selftext = d.crosspost_parent_list[0].selftext;\n  }\n\n  if (selftext.length > MAX_TEXT_LEN) {\n    selftext = selftext.slice(0, MAX_TEXT_LEN) + '\\n[truncated]';\n  }\n\n  const score = Number(d.score) || 0;\n  const numComments = Number(d.num_comments) || 0;\n  const upvoteRatio = Number(d.upvote_ratio) || 0;\n  const engagementRate = score > 0 ? (numComments / score) : 0;\n\n  const postDateIso = createdUtc ? new Date(createdUtc * 1000).toISOString() : '';\n\n  // 输出包含上游字段和帖子数据\n  out.push({\n    json: {\n      // 上游元数据\n      keyword,\n      keyword_priority,\n      keyword_category,\n      subreddit,\n      subreddit_priority,\n      subreddit_members,\n      subreddit_classification,\n      \n      // 帖子数据\n      post_id: d.id || '',\n      title,\n      selftext,\n      author: d.author || '',\n      subreddit_actual: d.subreddit || subreddit,\n      score,\n      upvote_ratio: upvoteRatio,\n      num_comments: numComments,\n      engagement_rate: engagementRate,\n      created_utc: createdUtc,\n      post_date: postDateIso.split('T')[0] || '',\n      post_date_iso: postDateIso,\n      permalink: d.permalink ? 'https://reddit.com' + d.permalink : '',\n      url: d.url || '',\n      content_fallback_url: d.url_overridden_by_dest || d.url || '',\n      comments_api: d.id ? 'https://oauth.reddit.com/comments/' + d.id + '.json?limit=50&depth=1&sort=top&raw_json=1' : ''\n    }\n  });\n}\n\nconsole.log('成功提取 ' + out.length + ' 条帖子');\nreturn out.length ? out : [{ json: { message: 'no posts found' } }];\n"
       },
       "id": "c6574824-a017-4138-b267-f445bc7cbdfa",
       "name": "提取数据和时间过滤",
@@ -356,7 +356,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ========================================================\n// 处理Reddit热评数据 - 优化版\n// 功能：提取前10条热评并格式化，完整继承所有上游字段\n// 模式：Run Once for Each Item\n// ========================================================\n\nconst currentItem = $input.item;\nconst commentsApiResponse = currentItem.json || {};\n\n// 获取上游帖子数据（来自\"提取数据和时间过滤\"节点）\nconst upstreamItems = $items(\"提取数据和时间过滤\");\nconst upstreamData = upstreamItems && upstreamItems.length > 0 ? upstreamItems[0].json : {};\n\nif (!upstreamData || Object.keys(upstreamData).length === 0) {\n  console.log('未找到上游帖子数据');\n}\n\nconst data = commentsApiResponse;\n\n// 初始化评论相关变量\nlet commentsText = '';\nlet commentsJSON = [];\nlet commentCount = 0;\nlet avgScore = 0;\n\ntry {\n  // Reddit评论API返回数组，第一个元素是帖子，第二个元素是评论列表\n  if (Array.isArray(data) && data.length > 1) {\n    const commentListing = data[1]?.data?.children || [];\n    \n    // 提取前10条有效评论\n    const validComments = commentListing\n      .filter(c => c.kind === 't1' && c.data)  // 过滤出评论类型\n      .slice(0, 10);  // 只取前10条\n    \n    commentCount = validComments.length;\n    \n    // 格式化评论\n    validComments.forEach((comment, index) => {\n      const c = comment.data;\n      const author = c.author || '[deleted]';\n      const body = (c.body || '').substring(0, 200);  // 限制每条评论200字符\n      const score = c.score || 0;\n      const created = c.created_utc ? new Date(c.created_utc * 1000).toISOString().split('T')[0] : '';\n      \n      // 文本格式（用于Google Sheets显示）\n      commentsText += `${index + 1}. @${author} (${score}👍 ${created}):\\n${body}\\n\\n`;\n      \n      // JSON格式（保留完整数据）\n      commentsJSON.push({\n        rank: index + 1,\n        author,\n        body,\n        score,\n        created_date: created,\n        comment_id: c.id || ''\n      });\n    });\n    \n    // 计算平均点赞数\n    if (commentCount > 0) {\n      const totalScore = commentsJSON.reduce((sum, c) => sum + c.score, 0);\n      avgScore = Math.round(totalScore / commentCount);\n    }\n    \n    console.log(`✅ 成功抓取 ${commentCount} 条热评`);\n  } else {\n    console.log('⚠️ 没有找到评论数据');\n  }\n} catch (error) {\n  console.log(`❌ 评论处理失败: ${error.message}`);\n}\n\n// 获取帖子原始数据（从Reddit API响应的第一个元素）\nlet postData = {};\nif (Array.isArray(data) && data.length > 0) {\n  const postListing = data[0]?.data?.children || [];\n  if (postListing.length > 0) {\n    postData = postListing[0]?.data || {};\n  }\n}\n\n// ✅ 返回结果：完整继承上游字段 + 添加评论字段\nreturn {\n  json: {\n    // 继承所有上游帖子字段（keyword, subreddit, title等）\n    ...upstreamData,\n    \n    // ✅ 添加评论相关字段\n    热门评论数量: commentCount,\n    热门评论文本: commentsText || '暂无评论',\n    热门评论JSON: JSON.stringify(commentsJSON),\n    热门评论平均分: avgScore,\n    \n    // ✅ 确保comments_api字段存在（供后续节点使用）\n    comments_api: postData.id ? `https://oauth.reddit.com/comments/${postData.id}.json?limit=50&depth=1&sort=top&raw_json=1` : ''\n  }\n};"
+        "jsCode": "// 处理Reddit热评数据（使用Merge后的数据）\n// Merge节点已将帖子数据和评论API响应合并\n// Input 1: 帖子数据（所有字段）\n// Input 2: 评论API响应\n\nconst item = $input.item;\nconst mergedData = item.json || {};\n\n// Merge后的数据包含帖子所有字段 + 评论API响应\n// 评论API响应通常在data字段中\nlet commentsApiResponse = mergedData;\n\n// 如果有body字段（某些配置），提取它\nif (mergedData.body) {\n  commentsApiResponse = mergedData.body;\n}\n\n// 初始化评论变量\nlet commentsText = '';\nlet commentsJSON = [];\nlet commentCount = 0;\nlet avgScore = 0;\n\ntry {\n  // Reddit评论API返回数组：[帖子, 评论列表]\n  if (Array.isArray(commentsApiResponse) && commentsApiResponse.length > 1) {\n    const commentListing = commentsApiResponse[1]?.data?.children || [];\n    \n    const validComments = commentListing\n      .filter(c => c.kind === 't1' && c.data)\n      .slice(0, 10);\n    \n    commentCount = validComments.length;\n    \n    validComments.forEach((comment, index) => {\n      const c = comment.data;\n      const author = c.author || '[deleted]';\n      const body = (c.body || '').substring(0, 200);\n      const score = c.score || 0;\n      const created = c.created_utc ? new Date(c.created_utc * 1000).toISOString().split('T')[0] : '';\n      \n      commentsText += (index + 1) + '. @' + author + ' (' + score + '👍 ' + created + '):\\n' + body + '\\n\\n';\n      \n      commentsJSON.push({\n        rank: index + 1,\n        author,\n        body,\n        score,\n        created_date: created,\n        comment_id: c.id || ''\n      });\n    });\n    \n    if (commentCount > 0) {\n      const totalScore = commentsJSON.reduce((sum, c) => sum + c.score, 0);\n      avgScore = Math.round(totalScore / commentCount);\n    }\n    \n    console.log('成功抓取 ' + commentCount + ' 条热评');\n  } else {\n    console.log('没有找到评论数据');\n  }\n} catch (error) {\n  console.log('评论处理失败: ' + error.message);\n}\n\n// Merge已经将帖子数据和评论响应合并\n// 我们只需要添加处理后的评论字段\nreturn {\n  json: {\n    ...mergedData,  // 保留所有merged字段（包括帖子数据）\n    热门评论数量: commentCount,\n    热门评论文本: commentsText || '暂无评论',\n    热门评论JSON: JSON.stringify(commentsJSON),\n    热门评论平均分: avgScore\n  }\n};\n"
       },
       "id": "process-comments-def456",
       "name": "处理评论数据",
@@ -476,17 +476,33 @@
     },
     {
       "parameters": {
-        "jsCode": "// 合并上游数据 - 数据继承保护节点\n// 功能：合并HTTP Request前后的数据，防止上游字段丢失\n\nconst currentItem = $input.item;\nconst apiResponse = currentItem.json || {};\n\n// 获取上游数据（来自\"等待1秒\"节点）\nconst upstreamItems = $items(\"等待1秒\");\nconst upstreamData = upstreamItems && upstreamItems.length > 0 ? upstreamItems[0].json : {};\n\nif (!upstreamData || Object.keys(upstreamData).length === 0) {\n  console.log('未找到上游数据，仅返回API响应');\n  return { json: apiResponse };\n}\n\nconsole.log('成功获取上游数据: keyword=' + upstreamData.keyword + ', subreddit=' + upstreamData.subreddit);\n\n// 合并数据\nconst merged = {\n  ...upstreamData,\n  reddit_api_response: apiResponse,\n  data: apiResponse.data || apiResponse.body?.data || apiResponse\n};\n\nconsole.log('数据合并完成，保留字段数: ' + Object.keys(merged).length);\n\nreturn { json: merged };"
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
       },
-      "id": "merge-upstream-data-node-001",
-      "name": "合并上游数据",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "merge-reddit-api-data",
+      "name": "合并Reddit数据",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
       "position": [
         4160,
         1088
-      ],
-      "alwaysOutputData": true
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "merge-comments-api-data",
+      "name": "合并评论数据",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        4832,
+        1088
+      ]
     }
   ],
   "pinData": {},
@@ -569,6 +585,11 @@
         [
           {
             "node": "调用Reddit API1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "合并Reddit数据",
             "type": "main",
             "index": 0
           }
@@ -660,6 +681,11 @@
             "node": "抓取Reddit热评",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "合并评论数据",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -668,9 +694,9 @@
       "main": [
         [
           {
-            "node": "处理评论数据",
+            "node": "合并评论数据",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -701,18 +727,29 @@
       "main": [
         [
           {
-            "node": "合并上游数据",
+            "node": "合并Reddit数据",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "合并Reddit数据": {
+      "main": [
+        [
+          {
+            "node": "提取数据和时间过滤",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "合并上游数据": {
+    "合并评论数据": {
       "main": [
         [
           {
-            "node": "提取数据和时间过滤",
+            "node": "处理评论数据",
             "type": "main",
             "index": 0
           }
