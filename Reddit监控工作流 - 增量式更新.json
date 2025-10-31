@@ -1,0 +1,709 @@
+{
+  "name": "Reddit监控工作流 - 增量式更新",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0722799d-28a2-4274-a383-1b636f4d03cd",
+      "name": "手动触发",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -1600,
+        400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 997707066,
+          "mode": "list",
+          "cachedResultName": "key words"
+        },
+        "options": {}
+      },
+      "id": "32b3ba52-f2e2-41e0-82b2-34a48e9e3387",
+      "name": "读取关键词表",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1400,
+        300
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 808343003,
+          "mode": "list",
+          "cachedResultName": "subreddits"
+        },
+        "options": {}
+      },
+      "id": "9d585a69-9b8f-47a4-84fa-5316561f0b68",
+      "name": "读取频道表",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -1400,
+        500
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "73c46595-44c9-4443-944f-6c12f53e5f12",
+      "name": "合并关键词和频道",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -1200,
+        400
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================================\n// 交叉匹配引擎 + row_number生成\n// 功能：生成关键词×频道组合，分配row_number\n// ========================================================\n\nconst MAX_COMBINATIONS = 2;\nconst items = $input.all();\n\nif (!items || items.length === 0) {\n  throw new Error('⚠️ 没有输入数据');\n}\n\nconst keywordItems = [];\nconst subredditItems = [];\n\nfor (const item of items) {\n  const row = item.json || {};\n  if (row.Keyword || row.keyword) {\n    keywordItems.push(item);\n  } else if (row['频道名称'] || row.subreddit || row.name) {\n    subredditItems.push(item);\n  }\n}\n\nif (keywordItems.length === 0 || subredditItems.length === 0) {\n  throw new Error(`❌ 数据不足 - 关键词: ${keywordItems.length}, 频道: ${subredditItems.length}`);\n}\n\nconsole.log(`📥 关键词: ${keywordItems.length}, 频道: ${subredditItems.length}`);\n\n// 解析关键词\nconst keywords = [];\nfor (const item of keywordItems) {\n  const row = item.json || {};\n  const rawKeyword = row.Keyword || row.keyword || '';\n  const priority = row['优先级'] || row.priority || '中';\n  const category = row['类别'] || row.category || '';\n\n  if (!rawKeyword.trim()) continue;\n\n  const kwList = rawKeyword.split('|').map(k => k.trim()).filter(Boolean);\n  for (const kw of kwList) {\n    keywords.push({ keyword: kw, priority, category });\n  }\n}\n\n// 解析频道\nconst subreddits = [];\nfor (const item of subredditItems) {\n  const row = item.json || {};\n  const name = row['频道名称'] || row.subreddit || row.name || '';\n  const priority = row['优先级'] || row.priority || 'C';\n  const members = row['成员数'] || row.members || '0';\n  const classification = row['分类'] || row.classification || '';\n\n  if (!name.trim()) continue;\n\n  const cleanName = name.replace(/^r\\//, '').trim().replace(/\\s+/g, '');\n  subreddits.push({ subreddit: cleanName, priority, members, classification });\n}\n\nconsole.log(`✅ 关键词: ${keywords.length}, 频道: ${subreddits.length}`);\n\n// 生成组合 + row_number\nconst combinations = [];\nlet rowNumber = 2; // 从第2行开始（第1行是表头）\n\nfor (const kw of keywords) {\n  for (const sr of subreddits) {\n    if (combinations.length >= MAX_COMBINATIONS) break;\n\n    combinations.push({\n      row_number: rowNumber++,\n      关键词: kw.keyword,\n      keyword_priority: kw.priority,\n      keyword_category: kw.category,\n      频道: sr.subreddit,\n      subreddit_priority: sr.priority,\n      subreddit_members: sr.members,\n      subreddit_classification: sr.classification,\n      平台: 'Reddit',\n      行业: kw.category || sr.classification,\n      post_id: '',  // 初始为空，Reddit阶段填充\n      链接: '',     // 初始为空\n      状态: '待处理'\n    });\n  }\n  if (combinations.length >= MAX_COMBINATIONS) break;\n}\n\nconsole.log(`✅ 生成 ${combinations.length} 个组合`);\nreturn combinations.map(c => ({ json: c }));\n"
+      },
+      "id": "bf8e56a7-7f04-4c97-add6-d90fc3f3b2ef",
+      "name": "交叉匹配引擎",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1000,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "关键词": "={{ $json.关键词 }}",
+            "频道": "={{ $json.频道 }}",
+            "行业": "={{ $json.行业 }}",
+            "平台": "={{ $json.平台 }}",
+            "post_id": "={{ $json.post_id }}",
+            "链接": "={{ $json.链接 }}",
+            "状态": "={{ $json.状态 }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "ce8fe309-592c-43be-995b-dd1bc2ec2ac4",
+      "name": "Append初始数据到Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -800,
+        400
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "options": {
+          "range": "A2:Z1000"
+        }
+      },
+      "id": "7132a7b8-63d5-4ab1-8484-0e44872bd697",
+      "name": "读取已写入数据",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -600,
+        400
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 构建Reddit搜索URL\nconst item = $input.item;\nconst data = item.json || {};\n\nconst keyword = data['关键词'] || data.keyword || '';\nconst subreddit = data['频道'] || data.subreddit || '';\nconst rowNumber = data['row_number'] || 0;\n\nif (!keyword || !subreddit) {\n  console.log('❌ 缺少关键词或频道');\n  return [];\n}\n\nconst searchUrl = `https://oauth.reddit.com/r/${subreddit}/search` +\n  `?q=${encodeURIComponent(keyword)}` +\n  `&restrict_sr=1&sort=new&limit=1&t=week&include_over_18=1&raw_json=1`;\n\nreturn {\n  json: {\n    ...data,\n    row_number: rowNumber,\n    search_url: searchUrl\n  }\n};\n"
+      },
+      "id": "259d4fab-07c7-40cc-8c9f-b4f083fa8aae",
+      "name": "构建Reddit搜索URL",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -400,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.search_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-workflow/2.0(u/Repulsive_Mark_7919)"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "id": "ae9a90a6-093c-4086-bfe2-861b5a785dc1",
+      "name": "调用Reddit API",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -200,
+        400
+      ],
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "425YTcnxD6M8uXNU",
+          "name": "n8n rR API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "af3cba0c-2e1f-4c65-ac5d-fbd1001ea6e2",
+      "name": "合并Reddit数据",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        0,
+        400
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "jsCode": "// 提取Reddit帖子数据并保留row_number\nconst item = $input.item;\nconst mergedData = item.json || {};\n\nconst rowNumber = mergedData.row_number || 0;\nconst keyword = mergedData['关键词'] || mergedData.keyword || '';\nconst subreddit = mergedData['频道'] || mergedData.subreddit || '';\n\n// 提取API响应\nconst apiData = mergedData.data || mergedData;\nconst posts = Array.isArray(apiData.children) ? apiData.children : [];\n\nif (!posts.length) {\n  console.log(`⚠️ 行${rowNumber}: 未找到帖子`);\n  return {\n    json: {\n      row_number: rowNumber,\n      关键词: keyword,\n      频道: subreddit,\n      状态: '无数据'\n    }\n  };\n}\n\n// 取第一个帖子\nconst post = posts[0].data || {};\n\nconst title = (post.title || '').substring(0, 500);\nconst selftext = (post.selftext || '').substring(0, 20000);\nconst score = Number(post.score) || 0;\nconst numComments = Number(post.num_comments) || 0;\nconst upvoteRatio = Number(post.upvote_ratio) || 0;\nconst postId = post.id || '';\nconst permalink = post.permalink ? 'https://reddit.com' + post.permalink : '';\nconst author = post.author || '';\nconst createdUtc = Number(post.created_utc) || 0;\nconst postDate = createdUtc ? new Date(createdUtc * 1000).toISOString().split('T')[0] : '';\n\nconst commentsApi = postId ? `https://oauth.reddit.com/comments/${postId}.json?limit=50&depth=1&sort=top&raw_json=1` : '';\n\nconsole.log(`✅ 行${rowNumber}: 提取帖子 ${postId}`);\n\nreturn {\n  json: {\n    row_number: rowNumber,\n    关键词: keyword,\n    频道: subreddit,\n    post_id: postId,\n    标题: title,\n    原文: selftext,\n    作者: author,\n    score: score,\n    upvote_ratio: upvoteRatio,\n    评论数: numComments,\n    链接: permalink,\n    post发布日期: postDate,\n    comments_api_url: commentsApi,\n    状态: '已获取Reddit数据'\n  }\n};\n"
+      },
+      "id": "b0ea6d85-5fa2-4ea4-968f-9756493de737",
+      "name": "提取Reddit数据",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        200,
+        400
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "post_id": "={{ $json.post_id }}",
+            "标题": "={{ $json.标题 }}",
+            "原文": "={{ $json.原文 }}",
+            "作者": "={{ $json.作者 }}",
+            "score": "={{ $json.score }}",
+            "upvote_ratio": "={{ $json.upvote_ratio }}",
+            "评论数": "={{ $json.评论数 }}",
+            "链接": "={{ $json.链接 }}",
+            "post发布日期": "={{ $json.post发布日期 }}",
+            "comments_api_url": "={{ $json.comments_api_url }}",
+            "状态": "={{ $json.状态 }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ]
+        },
+        "options": {}
+      },
+      "id": "274a1685-22ae-4179-baf3-dde4470da279",
+      "name": "更新Reddit数据到Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        400,
+        400
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "options": {
+          "range": "A2:Z1000"
+        }
+      },
+      "id": "bc4cfb56-dc22-403a-97e9-aa7ba3442284",
+      "name": "读取更新后数据",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        600,
+        400
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 准备AI分析数据并保留row_number\nconst item = $input.item;\nconst data = item.json || {};\n\nconst rowNumber = data.row_number || 0;\nconst postId = data.post_id || '';\nconst title = data['标题'] || '';\nconst selftext = data['原文'] || '';\n\n// 只分析有内容的帖子\nif (!postId || (!title && !selftext)) {\n  console.log(`⚠️ 行${rowNumber}: 无内容，跳过AI分析`);\n  return [];\n}\n\nconsole.log(`📤 行${rowNumber}: 准备AI分析`);\n\nreturn {\n  json: {\n    row_number: rowNumber,\n    post_id: postId,\n    title: title,\n    selftext: selftext,\n    keyword: data['关键词'] || '',\n    subreddit: data['频道'] || ''\n  }\n};\n"
+      },
+      "id": "ebee997b-49be-4d9d-a0fa-863a4db9fd25",
+      "name": "准备AI分析数据",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        800,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"contents\": [{\"role\": \"user\", \"parts\": [{\"text\": \"You are an expert in logistics, e-commerce, and social media marketing. Analyze the provided Reddit post and return a JSON object with your analysis.\\\\n\\\\n**Post Data:**\\\\nTitle: {{ $json.title }}\\\\nContent: {{ $json.selftext }}\\\\n\\\\n**Required JSON Output:**\\\\n{\\\\n  \\\\\\\"sentiment\\\\\\\": \\\\\\\"string (Positive/Neutral/Negative)\\\\\\\",\\\\n  \\\\\\\"sentiment_score\\\\\\\": \\\\\\\"integer (0-100)\\\\\\\",\\\\n  \\\\\\\"pain_points\\\\\\\": \\\\\\\"string\\\\\\\",\\\\n  \\\\\\\"user_needs\\\\\\\": \\\\\\\"string\\\\\\\",\\\\n  \\\\\\\"urgency\\\\\\\": \\\\\\\"string (High/Medium/Low)\\\\\\\",\\\\n  \\\\\\\"topic_category\\\\\\\": \\\\\\\"string\\\\\\\",\\\\n  \\\\\\\"conversion_potential\\\\\\\": \\\\\\\"string (High/Medium/Low)\\\\\\\",\\\\n  \\\\\\\"chinese_summary\\\\\\\": \\\\\\\"string\\\\\\\"\\\\n}\"}]}], \"generationConfig\": {\"temperature\": 0.35, \"responseMimeType\": \"application/json\"}} }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 3000
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "54ddd9d4-9804-402e-a8ad-752c4b855f96",
+      "name": "Gemini AI分析",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1000,
+        400
+      ],
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zXZHicj3I5k25blp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "f5a99d21-4a31-4864-a946-06b9daf1c411",
+      "name": "合并AI分析结果",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1200,
+        400
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "jsCode": "// 解析AI分析结果并保留row_number\nconst item = $input.item;\nconst mergedData = item.json || {};\n\nconst rowNumber = mergedData.row_number || 0;\nconst postId = mergedData.post_id || '';\n\n// 默认AI结果\nlet aiData = {\n  情绪分析: '未分析',\n  情绪分析分数: 0,\n  痛点: '',\n  用户需求: '',\n  紧急程度: '低',\n  主题类别: '',\n  转化潜力: '低',\n  中文总结: ''\n};\n\n// 解析Gemini响应\ntry {\n  if (mergedData.candidates && Array.isArray(mergedData.candidates)) {\n    const candidate = mergedData.candidates[0];\n    if (candidate?.content?.parts?.[0]?.text) {\n      const text = candidate.content.parts[0].text;\n      const cleanText = text.replace(/```json\\s*|```\\s*/g, '').trim();\n      const jsonMatch = cleanText.match(/\\{[\\s\\S]*\\}/);\n\n      if (jsonMatch) {\n        const parsed = JSON.parse(jsonMatch[0]);\n        aiData = {\n          情绪分析: parsed.sentiment || '未分析',\n          情绪分析分数: parsed.sentiment_score || 0,\n          痛点: parsed.pain_points || '',\n          用户需求: parsed.user_needs || '',\n          紧急程度: parsed.urgency || '低',\n          主题类别: parsed.topic_category || '',\n          转化潜力: parsed.conversion_potential || '低',\n          中文总结: parsed.chinese_summary || ''\n        };\n        console.log(`✅ 行${rowNumber}: AI分析完成`);\n      }\n    }\n  }\n} catch (error) {\n  console.log(`❌ 行${rowNumber}: AI解析失败 - ${error.message}`);\n}\n\nreturn {\n  json: {\n    row_number: rowNumber,\n    post_id: postId,\n    ...aiData,\n    状态: 'AI分析完成'\n  }\n};\n"
+      },
+      "id": "97e996bf-1cab-42c3-a52b-fd51f0c30f0d",
+      "name": "解析AI分析结果",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1400,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "情绪分析": "={{ $json.情绪分析 }}",
+            "情绪分析分数": "={{ $json.情绪分析分数 }}",
+            "痛点": "={{ $json.痛点 }}",
+            "用户需求": "={{ $json.用户需求 }}",
+            "紧急程度": "={{ $json.紧急程度 }}",
+            "主题/类别": "={{ $json.主题类别 }}",
+            "转化潜力": "={{ $json.转化潜力 }}",
+            "中文总结": "={{ $json.中文总结 }}",
+            "状态": "={{ $json.状态 }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ]
+        },
+        "options": {}
+      },
+      "id": "885577b2-28d7-47b3-93af-c102607a279a",
+      "name": "更新AI分析到Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1600,
+        400
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "手动触发": {
+      "main": [
+        [
+          {
+            "node": "读取关键词表",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "读取频道表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取关键词表": {
+      "main": [
+        [
+          {
+            "node": "合并关键词和频道",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取频道表": {
+      "main": [
+        [
+          {
+            "node": "合并关键词和频道",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "合并关键词和频道": {
+      "main": [
+        [
+          {
+            "node": "交叉匹配引擎",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "交叉匹配引擎": {
+      "main": [
+        [
+          {
+            "node": "Append初始数据到Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append初始数据到Sheets": {
+      "main": [
+        [
+          {
+            "node": "读取已写入数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取已写入数据": {
+      "main": [
+        [
+          {
+            "node": "构建Reddit搜索URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建Reddit搜索URL": {
+      "main": [
+        [
+          {
+            "node": "调用Reddit API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "合并Reddit数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "调用Reddit API": {
+      "main": [
+        [
+          {
+            "node": "合并Reddit数据",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "合并Reddit数据": {
+      "main": [
+        [
+          {
+            "node": "提取Reddit数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取Reddit数据": {
+      "main": [
+        [
+          {
+            "node": "更新Reddit数据到Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新Reddit数据到Sheets": {
+      "main": [
+        [
+          {
+            "node": "读取更新后数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取更新后数据": {
+      "main": [
+        [
+          {
+            "node": "准备AI分析数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "准备AI分析数据": {
+      "main": [
+        [
+          {
+            "node": "Gemini AI分析",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "合并AI分析结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI分析": {
+      "main": [
+        [
+          {
+            "node": "合并AI分析结果",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "合并AI分析结果": {
+      "main": [
+        [
+          {
+            "node": "解析AI分析结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析AI分析结果": {
+      "main": [
+        [
+          {
+            "node": "更新AI分析到Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d1a0b398-e673-4aa2-8b10-587ba97c5f50",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cf3a3e94a3582062b1bbb0314be4475a417462d0865c5094dcc2ad7edb7d7989"
+  },
+  "id": "incremental-workflow-ec26ae1c",
+  "tags": []
+}
