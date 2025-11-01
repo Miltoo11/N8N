@@ -1,0 +1,1671 @@
+<html lang="en" class="no-js"><head><link href="../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head><body dir="ltr" data-md-color-scheme="light" data-md-color-primary="indigo" data-md-color-accent="indigo">﻿
+
+
+  
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Use Luxon to work with date and time in n8n.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.n8n.io/code/cookbook/luxon/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../_images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+
+
+<title>Date and time with Luxon | n8n Docs </title>
+
+
+
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-K86VCV3');</script>
+	<!-- End Google Tag Manager -->
+
+
+<!-- Plausible analytics -->
+<!--
+https://plausible.io/docs/script-extensions?ref=ryansechrest.com#all-our-script-extensions
+ -->
+
+<script defer event-content_type="howto" data-domain="docs.n8n.io" src="https://plausible.io/js/script.file-downloads.outbound-links.pageview-props.tagged-events.js"></script>
+<script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+
+
+
+
+<!-- n8n Workflow Preview Service -->
+<script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2.0.0/webcomponents-loader.js"></script>
+<script src="https://www.unpkg.com/lit@2.0.0-rc.2/polyfill-support.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@n8n_io/n8n-demo-component/n8n-demo.bundled.js"></script>
+
+
+
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../_extra/css/extra.css">
+    
+      <link rel="stylesheet" href="../../../_extra/css/macro-styles.css">
+    
+      <link rel="stylesheet" href="../../../_extra/css/templates-widget.css">
+    
+      <link rel="stylesheet" href="../../../_extra/css/workflow-demo.css">
+    
+      <link rel="stylesheet" href="../../../_extra/css/feedback.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-0SC4FF2FH9"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-0SC4FF2FH9",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-0SC4FF2FH9",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+<meta name="ahrefs-site-verification" content="b13556bca44be7ae858f67ddbdd71eaa177d9389a88eb295244299a87292d60a">
+
+  
+  
+  
+    
+    
+    
+    
+    
+    
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#date-and-time-with-luxon" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      ﻿<!-- Determine base classes -->
+
+
+
+<!-- Header -->
+<header class="md-header" data-md-component="header">
+
+  <nav class="md-header__inner md-grid" aria-label="header.title">
+
+    <!-- Link to home -->
+    <a href="../../.." title="n8n Docs" class="md-header__button md-logo" aria-label="n8n Docs" data-md-component="logo">
+      
+  <img src="../../../_images/n8n-docs-icon.svg" alt="logo">
+
+    </a>
+
+    <!-- Button to open drawer -->
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+
+    <!-- Header title -->
+		<!-- n8n CUSTOM: remove the page title section. This pairs with custom CSS to keep the site
+		title in place on scroll -->
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            n8n Docs
+          </span>
+        </div>
+        </div>
+      </div>
+    
+
+    <!-- Color palette -->
+    
+
+    <!-- User preference: color palette -->
+    
+
+    <!-- Site language selector -->
+    
+    
+  <!-- n8n CUSTOM: Kapa -->
+  ﻿<!-- Determine whether to show kapa button -->
+
+
+
+<!-- n8n CUSTOM: Kapa -->
+
+
+<button class="n8n-kapa-button plausible-event-name=Kapa+Button+Top" onclick="window.Kapa.open({ 
+    mode: 'ai'
+    })" type="button">
+    <span class="md-search__icon md-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m19 1-1.26 2.75L15 5l2.74 1.26L19 9l1.25-2.74L23 5l-2.75-1.25M9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5M19 15l-1.26 2.74L15 19l2.74 1.25L19 23l1.25-2.75L23 19l-2.75-1.26"></path></svg></span><span class="n8n-search-text">Chat with the docs</span>
+</button>
+
+  
+
+  <!-- Button to open search modal -->
+    
+      
+
+      <!-- Check if search is actually enabled - see https://t.ly/DT_0V -->
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+
+        <!-- Search interface -->
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+
+    <!-- Repository information -->
+	  <!-- n8n CUSTOM: don't show GitHub link -->
+  </nav>
+
+  <!-- Navigation tabs (sticky) -->
+  
+</header>
+
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            ﻿
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid n8n-other-sites">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../workflows/getting-started.md" class="md-tabs__link">
+          
+  
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../nodes/overview.md" class="md-tabs__link">
+          
+  
+  
+  Nodes
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api/api-reference/" class="md-tabs__link">
+          
+  
+  
+  API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../integrations/overview.md" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../troubleshooting/common-issues.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../about.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+	<!-- n8n CUSTOM: additional nav to link to other n8n sites -->
+	<ul class="md-tabs__list">
+		<li class="md-tabs__item"><a href="https://n8n.io/" class="md-tabs__link" target="_blank">n8n home 鈫?/a&gt;</a></li><a href="https://n8n.io/" class="md-tabs__link" target="_blank">
+		</a><li class="md-tabs__item"><a href="https://n8n.io/" class="md-tabs__link" target="_blank"></a><a href="https://community.n8n.io/" class="md-tabs__link" target="_blank">Forum 鈫?/a&gt;</a></li><a href="https://community.n8n.io/" class="md-tabs__link" target="_blank">
+		</a><li class="md-tabs__item"><a href="https://community.n8n.io/" class="md-tabs__link" target="_blank"></a><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">Tutorials (blog) 鈫?/a&gt;</a></li><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+	  </a></ul><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+  </a></div><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+</a></nav><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+
+          
+        
+      
+      </a><main class="md-main" data-md-component="main"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+        </a><div class="md-main__inner md-grid"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+          
+            
+              
+              </a><div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+                </a><div class="md-sidebar__scrollwrap"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+                  </a><div class="md-sidebar__inner"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+                    ﻿<!--
+  Copyright (c) 2016-2025 Martin Donath <martin.donath@squidfunk.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+-->
+
+
+
+<!-- Determine classes -->
+
+
+  
+
+
+
+<!-- Navigation -->
+</a><nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+
+  <!-- Site title -->
+  <label class="md-nav__title" for="__drawer">
+    </label></a><a href="../../.." title="n8n Docs" class="md-nav__button md-logo" aria-label="n8n Docs" data-md-component="logo">
+      
+  <img src="../../../_images/n8n-docs-icon.svg" alt="logo">
+
+    </a>
+    n8n Docs
+  
+
+  <!-- n8n CUSTOM: don't show repo link -->
+  
+
+  <!-- Navigation list -->
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/getting-started.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/executions/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Debug and re-run past executions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/executions/dirty-nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Dirty nodes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/executions/manual-partial-and-production-executions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual, partial, and production executions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/executions/single-workflow-executions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow-level executions list
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Nodes
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Nodes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../nodes/overview.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../nodes/community-nodes.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4">
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Api reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integrations
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Integrations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integrations/overview.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integrations/http-node.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/common-issues.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#date-and-time-behavior-in-n8n" class="md-nav__link">
+    <span class="md-ellipsis">
+      Date and time behavior in n8n
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-the-timezone-in-n8n" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting the timezone in n8n
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common tasks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-the-current-datetime-or-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get the current datetime or date
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convert-javascript-dates-to-luxon" class="md-nav__link">
+    <span class="md-ellipsis">
+      Convert JavaScript dates to Luxon
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convert-date-string-to-luxon" class="md-nav__link">
+    <span class="md-ellipsis">
+      Convert date string to Luxon
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Convert date string to Luxon">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#if-you-have-a-date-in-a-supported-standard-technical-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      If you have a date in a supported standard technical format:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-you-have-a-date-as-a-string-that-doesnt-use-a-standard-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      If you have a date as a string that doesn't use a standard format:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-n-days-from-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get n days from today
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-human-readable-dates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create human-readable dates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-the-time-between-two-dates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get the time between two dates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-longer-example-how-many-days-to-christmas" class="md-nav__link">
+    <span class="md-ellipsis">
+      A longer example: How many days to Christmas?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K86VCV3" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+
+                  
+
+﻿<!--
+  Copyright (c) 2016-2024 Martin Donath <martin.donath@squidfunk.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+-->
+
+<!-- Actions -->
+
+
+  <!-- Edit button -->
+<!-- n8n CUSTOM: open in new tab -->
+  
+    <a href="https://github.com/n8n-io/n8n-docs/edit/main/docs/code/cookbook/luxon.md" title="Edit this page" class="md-content__button md-icon" target="_blank">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+
+  <!-- View button -->
+  
+
+
+
+<h1 id="date-and-time-with-luxon">Date and time with Luxon<a class="headerlink" href="#date-and-time-with-luxon" title="Permanent link">#</a></h1>
+<p><a href="https://github.com/moment/luxon/">Luxon</a> is a JavaScript library that makes it easier to work with date and time. For full details of how to use Luxon, refer to <a href="https://moment.github.io/luxon/#/?id=luxon">Luxon's documentation</a>. </p>
+<p>n8n passes dates between nodes as strings, so you need to parse them. Luxon makes this easier.</p>
+<div class="admonition note">
+<p class="admonition-title">Python support</p>
+<p>Luxon is a JavaScript library. The two convenience <a href="#get-the-current-datetime-or-date">variables</a> created by n8n are available when using Python in the Code node, but their functionality is limited:</p>
+<ul>
+<li>You can't perform Luxon operations on these variables. For example, there is no Python equivalent for <code>$today.minus(...)</code>.</li>
+<li>The generic Luxon functionality, such as <a href="#convert-date-string-to-luxon">Convert date string to Luxon</a>, isn't available for Python users.</li>
+</ul>
+</div>
+<h2 id="date-and-time-behavior-in-n8n">Date and time behavior in n8n<a class="headerlink" href="#date-and-time-behavior-in-n8n" title="Permanent link">#</a></h2>
+<p>Be aware of the following:</p>
+<ul>
+<li>In a workflow, n8n converts dates and times to strings between nodes. Keep this in mind when doing arithmetic on dates and times from other nodes.</li>
+<li>With vanilla JavaScript, you can convert a string to a date with <code>new Date('2019-06-23')</code>. In Luxon, you must use a function explicitly stating the format, such as <code>DateTime.fromISO('2019-06-23')</code> or <code>DateTime.fromFormat("23-06-2019", "dd-MM-yyyy")</code>.</li>
+</ul>
+<h2 id="setting-the-timezone-in-n8n">Setting the timezone in n8n<a class="headerlink" href="#setting-the-timezone-in-n8n" title="Permanent link">#</a></h2>
+<p>Luxon uses the n8n timezone. This value is either:</p>
+<ul>
+<li>Default: <code>America/New York</code></li>
+<li>A custom timezone for your n8n instance, set using the <code>GENERIC_TIMEZONE</code> environment variable.</li>
+<li>A custom timezone for an individual workflow, configured in workflow settings.</li>
+</ul>
+<h2 id="common-tasks">Common tasks<a class="headerlink" href="#common-tasks" title="Permanent link">#</a></h2>
+<p>This section provides examples for some common operations. More examples, and detailed guidance, are available in <a href="https://moment.github.io/luxon/#/?id=luxon">Luxon's own documentation</a>.</p>
+<h3 id="get-the-current-datetime-or-date">Get the current datetime or date<a class="headerlink" href="#get-the-current-datetime-or-date" title="Permanent link">#</a></h3>
+<p>Use the <a href="/code/builtin/date-time.md"><code>$now</code> and <code>$today</code> Luxon objects</a> to get the current time or day:</p>
+<ul>
+<li><code>now</code>: a Luxon object containing the current timestamp. Equivalent to <code>DateTime.now()</code>.</li>
+<li><code>today</code>: a Luxon object containing the current timestamp, rounded down to the day. Equivalent to <code>DateTime.now().set({ hour: 0, minute: 0, second: 0, millisecond: 0 })</code>.</li>
+</ul>
+<p>Note that these variables can return different time formats when cast as a string:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio"><input id="__tabbed_1_2" name="__tabbed_1" type="radio"><input id="__tabbed_1_3" name="__tabbed_1" type="radio"><div class="tabbed-labels"><label for="__tabbed_1_1">Expressions (JavaScript)</label><label for="__tabbed_1_2">Code node (JavaScript)</label><label for="__tabbed_1_3">Code node (Python)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">$now</span><span class="p">}}</span>
+<span class="c1">// n8n displays the ISO formatted timestamp</span>
+<span class="c1">// For example 2022-03-09T14:02:37.065+00:00</span>
+<span class="p">{{</span><span class="s2">"Today's date is "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">$now</span><span class="p">}}</span>
+<span class="c1">// n8n displays "Today's date is &lt;unix timestamp&gt;"</span>
+<span class="c1">// For example "Today's date is 1646834498755"</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nx">$now</span>
+<span class="c1">// n8n displays &lt;ISO formatted timestamp&gt;</span>
+<span class="c1">// For example 2022-03-09T14:00:25.058+00:00</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">rightNow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Today's date is "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">$now</span>
+<span class="c1">// n8n displays "Today's date is &lt;unix timestamp&gt;"</span>
+<span class="c1">// For example "Today's date is 1646834498755"</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">_now</span>
+<span class="c1"># n8n displays &lt;ISO formatted timestamp&gt;</span>
+<span class="c1"># For example 2022-03-09T14:00:25.058+00:00</span>
+<span class="n">rightNow</span> <span class="o">=</span> <span class="s2">"Today's date is "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">_now</span><span class="p">)</span>
+<span class="c1"># n8n displays "Today's date is &lt;unix timestamp&gt;"</span>
+<span class="c1"># For example "Today's date is 1646834498755"</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>n8n provides built-in convenience functions to support data transformation in expressions for dates. Refer to <a href="/code/builtin/data-transformation-functions/dates.md">Data transformation functions | Dates</a> for more information.</p>
+<h3 id="convert-javascript-dates-to-luxon">Convert JavaScript dates to Luxon<a class="headerlink" href="#convert-javascript-dates-to-luxon" title="Permanent link">#</a></h3>
+<p>To convert a native JavaScript date to a Luxon date:</p>
+<ul>
+<li>In expressions, use the <a href="/code/builtin/data-transformation-functions/dates.md#date-toDateTime"><code>.toDateTime()</code> method</a>. For example, <code>{{ (new Date()).ToDateTime() }}</code>.</li>
+<li>In the Code node, use <code>DateTime.fromJSDate()</code>. For example, <code>let luxondate = DateTime.fromJSDate(new Date())</code>.</li>
+</ul>
+<h3 id="convert-date-string-to-luxon">Convert date string to Luxon<a class="headerlink" href="#convert-date-string-to-luxon" title="Permanent link">#</a></h3>
+<p>You can convert date strings and other date formats to a Luxon DateTime object. You can convert from standard formats and from arbitrary strings.</p>
+<div class="admonition note">
+<p class="admonition-title">A difference between Luxon DateTime and JavaScript Date</p>
+<p>With vanilla JavaScript, you can convert a string to a date with <code>new Date('2019-06-23')</code>. In Luxon, you must use a function explicitly stating the format, such as <code>DateTime.fromISO('2019-06-23')</code> or <code>DateTime.fromFormat("23-06-2019", "dd-MM-yyyy")</code>.</p>
+</div>
+<h4 id="if-you-have-a-date-in-a-supported-standard-technical-format">If you have a date in a supported standard technical format:<a class="headerlink" href="#if-you-have-a-date-in-a-supported-standard-technical-format" title="Permanent link">#</a></h4>
+<p>Most dates use <code>fromISO()</code>. This creates a Luxon DateTime from an ISO 8601 string. For example:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio"><input id="__tabbed_2_2" name="__tabbed_2" type="radio"><div class="tabbed-labels"><label for="__tabbed_2_1">Expressions (JavaScript)</label><label for="__tabbed_2_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="s1">'2019-06-23T00:00:00.00'</span><span class="p">)}}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">luxonDateTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="s1">'2019-06-23T00:00:00.00'</span><span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Luxon's API documentation has more information on <a href="https://moment.github.io/luxon/api-docs/index.html#datetimefromiso">fromISO</a>.</p>
+<p>Luxon provides functions to handle conversions for a range of formats. Refer to Luxon's guide to <a href="https://moment.github.io/luxon/#/parsing?id=parsing-technical-formats">Parsing technical formats</a> for details.</p>
+<h4 id="if-you-have-a-date-as-a-string-that-doesnt-use-a-standard-format">If you have a date as a string that doesn't use a standard format:<a class="headerlink" href="#if-you-have-a-date-as-a-string-that-doesnt-use-a-standard-format" title="Permanent link">#</a></h4>
+<p>Use Luxon's <a href="https://moment.github.io/luxon/#/parsing?id=ad-hoc-parsing">Ad-hoc parsing</a>. To do this, use the <code>fromFormat()</code> function, providing the string and a set of <a href="https://moment.github.io/luxon/#/parsing?id=table-of-tokens">tokens</a> that describe the format.</p>
+<p>For example, you have n8n's founding date, 23rd June 2019, formatted as <code>23-06-2019</code>. You want to turn this into a Luxon object:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio"><input id="__tabbed_3_2" name="__tabbed_3" type="radio"><div class="tabbed-labels"><label for="__tabbed_3_1">Expressions (JavaScript)</label><label for="__tabbed_3_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromFormat</span><span class="p">(</span><span class="s2">"23-06-2019"</span><span class="p">,</span><span class="w"> </span><span class="s2">"dd-MM-yyyy"</span><span class="p">)}}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">newFormat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromFormat</span><span class="p">(</span><span class="s2">"23-06-2019"</span><span class="p">,</span><span class="w"> </span><span class="s2">"dd-MM-yyyy"</span><span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>When using ad-hoc parsing, note Luxon's warning about <a href="https://moment.github.io/luxon/#/parsing?id=limitations">Limitations</a>. If you see unexpected results, try their <a href="https://moment.github.io/luxon/#/parsing?id=debugging">Debugging</a> guide.</p>
+<h3 id="get-n-days-from-today">Get n days from today<a class="headerlink" href="#get-n-days-from-today" title="Permanent link">#</a></h3>
+<p>Get a number of days before or after today. </p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio"><input id="__tabbed_4_2" name="__tabbed_4" type="radio"><div class="tabbed-labels"><label for="__tabbed_4_1">Expressions (JavaScript)</label><label for="__tabbed_4_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>For example, you want to set a field to always show the date seven days before the current date.</p>
+<p>In the expressions editor, enter:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">$today</span><span class="p">.</span><span class="nx">minus</span><span class="p">({</span><span class="nx">days</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">})}}</span>
+</code></pre></div>
+<p>On the 23rd June 2019, this returns <code>[Object: "2019-06-16T00:00:00.000+00:00"]</code>.</p>
+<p>This example uses n8n's custom variable <code>$today</code> for convenience. It's the equivalent of <code>DateTime.now().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).minus({days: 7})</code>.</p>
+</div>
+<div class="tabbed-block">
+<p>For example, you want a variable containing the date seven days before the current date.</p>
+<p>In the code editor, enter:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">sevenDaysAgo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">$today</span><span class="p">.</span><span class="nx">minus</span><span class="p">({</span><span class="nx">days</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">})</span>
+</code></pre></div>
+<p>On the 23rd June 2019, this returns <code>[Object: "2019-06-16T00:00:00.000+00:00"]</code>.</p>
+<p>This example uses n8n's custom variable <code>$today</code> for convenience. It's the equivalent of <code>DateTime.now().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).minus({days: 7})</code>.</p>
+</div>
+</div>
+</div>
+<p>For more detailed information and examples, refer to:</p>
+<ul>
+<li>Luxon's <a href="https://moment.github.io/luxon/#/math">guide to math</a></li>
+<li>Their API documentation on <a href="https://moment.github.io/luxon/api-docs/index.html#datetimeplus">DateTime plus</a> and <a href="https://moment.github.io/luxon/api-docs/index.html#datetimeminus">DateTime minus</a></li>
+</ul>
+<h3 id="create-human-readable-dates">Create human-readable dates<a class="headerlink" href="#create-human-readable-dates" title="Permanent link">#</a></h3>
+<p>In <a href="#get-n-days-from-today">Get n days from today</a>, the example gets the date seven days before the current date, and returns it as <code>[Object: "yyyy-mm-dd-T00:00:00.000+00:00"]</code> (for expressions) or <code>yyyy-mm-dd-T00:00:00.000+00:00</code> (in the Code node). To make this more readable, you can use Luxon's formatting functions.</p>
+<p>For example, you want the field containing the date to be formatted as DD/MM/YYYY, so that on the 23rd June 2019, it returns <code>23/06/2019</code>.</p>
+<p>This expression gets the date seven days before today, and converts it to the DD/MM/YYYY format.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio"><input id="__tabbed_5_2" name="__tabbed_5" type="radio"><div class="tabbed-labels"><label for="__tabbed_5_1">Expressions (JavaScript)</label><label for="__tabbed_5_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">$today</span><span class="p">.</span><span class="nx">minus</span><span class="p">({</span><span class="nx">days</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">}).</span><span class="nx">toLocaleString</span><span class="p">()}}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">readableSevenDaysAgo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">$today</span><span class="p">.</span><span class="nx">minus</span><span class="p">({</span><span class="nx">days</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">}).</span><span class="nx">toLocaleString</span><span class="p">()</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>You can alter the format. For example:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio"><input id="__tabbed_6_2" name="__tabbed_6" type="radio"><div class="tabbed-labels"><label for="__tabbed_6_1">Expressions (JavaScript)</label><label for="__tabbed_6_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">$today</span><span class="p">.</span><span class="nx">minus</span><span class="p">({</span><span class="nx">days</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">}).</span><span class="nx">toLocaleString</span><span class="p">({</span><span class="nx">month</span><span class="o">:</span><span class="w"> </span><span class="s1">'long'</span><span class="p">,</span><span class="w"> </span><span class="nx">day</span><span class="o">:</span><span class="w"> </span><span class="s1">'numeric'</span><span class="p">,</span><span class="w"> </span><span class="nx">year</span><span class="o">:</span><span class="w"> </span><span class="s1">'numeric'</span><span class="p">})}}</span>
+</code></pre></div>
+<p>On 23rd June 2019, this returns "16 June 2019".</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">readableSevenDaysAgo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">$today</span><span class="p">.</span><span class="nx">minus</span><span class="p">({</span><span class="nx">days</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">}).</span><span class="nx">toLocaleString</span><span class="p">({</span><span class="nx">month</span><span class="o">:</span><span class="w"> </span><span class="s1">'long'</span><span class="p">,</span><span class="w"> </span><span class="nx">day</span><span class="o">:</span><span class="w"> </span><span class="s1">'numeric'</span><span class="p">,</span><span class="w"> </span><span class="nx">year</span><span class="o">:</span><span class="w"> </span><span class="s1">'numeric'</span><span class="p">})</span>
+</code></pre></div>
+<p>On 23rd June 2019, this returns "16 June 2019".</p>
+</div>
+</div>
+</div>
+<p>Refer to Luxon's guide on <a href="https://moment.github.io/luxon/#/formatting?id=tolocalestring-strings-for-humans">toLocaleString (strings for humans)</a> for more information.</p>
+<h3 id="get-the-time-between-two-dates">Get the time between two dates<a class="headerlink" href="#get-the-time-between-two-dates" title="Permanent link">#</a></h3>
+<p>To get the time between two dates, use Luxon's diffs feature. This subtracts one date from another and returns a duration.</p>
+<p>For example, get the number of months between two dates:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio"><input id="__tabbed_7_2" name="__tabbed_7" type="radio"><div class="tabbed-labels"><label for="__tabbed_7_1">Expressions (JavaScript)</label><label for="__tabbed_7_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="s1">'2019-06-23'</span><span class="p">).</span><span class="nx">diff</span><span class="p">(</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="s1">'2019-05-23'</span><span class="p">),</span><span class="w"> </span><span class="s1">'months'</span><span class="p">).</span><span class="nx">toObject</span><span class="p">()}}</span>
+</code></pre></div>
+<p>This returns <code>[Object: {"months":1}]</code>.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">monthsBetweenDates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="s1">'2019-06-23'</span><span class="p">).</span><span class="nx">diff</span><span class="p">(</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="s1">'2019-05-23'</span><span class="p">),</span><span class="w"> </span><span class="s1">'months'</span><span class="p">).</span><span class="nx">toObject</span><span class="p">()</span>
+</code></pre></div>
+<p>This returns <code>{"months":1}</code>.</p>
+</div>
+</div>
+</div>
+<p>Refer to Luxon's <a href="https://moment.github.io/luxon/#/math?id=diffs">Diffs</a> for more information.</p>
+<h3 id="a-longer-example-how-many-days-to-christmas">A longer example: How many days to Christmas?<a class="headerlink" href="#a-longer-example-how-many-days-to-christmas" title="Permanent link">#</a></h3>
+<p>This example brings together several Luxon features, uses JMESPath, and does some basic string manipulation. </p>
+<p>The scenario: you want a countdown to 25th December. Every day, it should tell you the number of days remaining to Christmas. You don't want to update it for next year - it needs to seamlessly work for every year.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio"><input id="__tabbed_8_2" name="__tabbed_8" type="radio"><div class="tabbed-labels"><label for="__tabbed_8_1">Expressions (JavaScript)</label><label for="__tabbed_8_2">Code node (JavaScript)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="s2">"There are "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">$today</span><span class="p">.</span><span class="nx">diff</span><span class="p">(</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="nx">$today</span><span class="p">.</span><span class="nx">year</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">'-12-25'</span><span class="p">),</span><span class="w"> </span><span class="s1">'days'</span><span class="p">).</span><span class="nx">toObject</span><span class="p">().</span><span class="nx">days</span><span class="p">.</span><span class="nx">toString</span><span class="p">().</span><span class="nx">substring</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">" days to Christmas!"</span><span class="p">}}</span>
+</code></pre></div>
+<p>This outputs <code>"There are &lt;number of days&gt; days to Christmas!"</code>. For example, on 9th March, it outputs "There are 291 days to Christmas!".</p>
+<p>A detailed explanation of what the expression does:</p>
+<ul>
+<li><code>{{</code>: indicates the start of the expression.</li>
+<li><code>"There are "</code>: a string. </li>
+<li><code>+</code>: used to join two strings.</li>
+<li><code>$today.diff()</code>: This is similar to the example in <a href="#get-the-time-between-two-dates">Get the time between two dates</a>, but it uses n8n's custom <code>$today</code> variable.</li>
+<li><code>DateTime.fromISO($today.year + '-12-25'), 'days'</code>: this part gets the current year using <code>$today.year</code>, turns it into an ISO string along with the month and date, and then takes the whole ISO string and converts it to a Luxon DateTime data structure. It also tells Luxon that you want the duration in days.</li>
+<li><code>toObject()</code> turns the result of diff() into a more usable object. At this point, the expression returns <code>[Object: {"days":-&lt;number-of-days&gt;}]</code>. For example, on 9th March, <code>[Object: {"days":-291}]</code>.</li>
+<li><code>.days</code> uses JMESPath syntax to retrieve just the number of days from the object. For more information on using JMESPath with n8n, refer to our <a href="/code/cookbook/jmespath.md">JMESpath</a> documentation. This gives you the number of days to Christmas, as a negative number.</li>
+<li><code>.toString().substring(1)</code> turns the number into a string and removes the <code>-</code>.</li>
+<li><code>+ " days to Christmas!"</code>: another string, with a <code>+</code> to join it to the previous string.</li>
+<li><code>}}</code>: indicates the end of the expression.</li>
+</ul>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">daysToChristmas</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"There are "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">$today</span><span class="p">.</span><span class="nx">diff</span><span class="p">(</span><span class="nx">DateTime</span><span class="p">.</span><span class="nx">fromISO</span><span class="p">(</span><span class="nx">$today</span><span class="p">.</span><span class="nx">year</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">'-12-25'</span><span class="p">),</span><span class="w"> </span><span class="s1">'days'</span><span class="p">).</span><span class="nx">toObject</span><span class="p">().</span><span class="nx">days</span><span class="p">.</span><span class="nx">toString</span><span class="p">().</span><span class="nx">substring</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">" days to Christmas!"</span><span class="p">;</span>
+</code></pre></div>
+<p>This outputs <code>"There are &lt;number of days&gt; days to Christmas!"</code>. For example, on 9th March, it outputs "There are 291 days to Christmas!".</p>
+<p>A detailed explanation of what the code does:</p>
+<ul>
+<li><code>"There are "</code>: a string. </li>
+<li><code>+</code>: used to join two strings.</li>
+<li><code>$today.diff()</code>: This is similar to the example in <a href="#get-the-time-between-two-dates">Get the time between two dates</a>, but it uses n8n's custom <code>$today</code> variable.</li>
+<li><code>DateTime.fromISO($today.year + '-12-25'), 'days'</code>: this part gets the current year using <code>$today.year</code>, turns it into an ISO string along with the month and date, and then takes the whole ISO string and converts it to a Luxon DateTime data structure. It also tells Luxon that you want the duration in days.</li>
+<li><code>toObject()</code> turns the result of diff() into a more usable object. At this point, the expression returns <code>[Object: {"days":-&lt;number-of-days&gt;}]</code>. For example, on 9th March, <code>[Object: {"days":-291}]</code>.</li>
+<li><code>.days</code> uses JMESPath syntax to retrieve just the number of days from the object. For more information on using JMESPath with n8n, refer to our <a href="/code/cookbook/jmespath.md">JMESpath</a> documentation. This gives you the number of days to Christmas, as a negative number.</li>
+<li><code>.toString().substring(1)</code> turns the number into a string and removes the <code>-</code>.</li>
+<li><code>+ " days to Christmas!"</code>: another string, with a <code>+</code> to join it to the previous string.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+
+
+
+
+                
+
+	﻿<!-- Determine whether to show kapa button -->
+
+
+
+<!-- n8n CUSTOM: Kapa -->
+
+
+<div class="n8n-wrap-kapa">
+  <button class="n8n-kapa-button plausible-event-name=Kapa+Button+Page+Bottom" onclick="window.Kapa.open({ 
+    mode: 'ai'
+    })" type="button">
+    <span class="md-search__icon md-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m19 1-1.26 2.75L15 5l2.74 1.26L19 9l1.25-2.74L23 5l-2.75-1.25M9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5M19 15l-1.26 2.74L15 19l2.74 1.25L19 23l1.25-2.75L23 19l-2.75-1.26"></path></svg></span><span class="n8n-search-text">Chat with the docs</span>
+</button>
+</div>
+
+
+
+﻿<!-- n8n CUSTOM
+ This is a custom partial created by n8n (it isn't part of Material for MkDocs)
+
+ We add it to the site by including it in _overrides/main.html
+ It relies on docs/_extra/javascript/feedback.js to handle the behavior
+ And docs/_extra/css/feedback.css to handle the styling
+ -->
+
+<!-- Determine feedback configuration -->
+
+  
+
+
+<!-- Determine whether to show feedback -->
+
+
+<!-- Was this page helpful? -->
+
+  <div class="n8n-feedback-container">
+        <div id="n8n-ratings-feedback">
+            <span>This page was</span>
+            <button type="submit" class="plausible-event-name=Positive+Rating plausible-event-page=/code/cookbook/luxon/ n8n-feedback-button-positive" onclick="handleRating('positive')">
+                <img src="/_images/assets/thumb_up.png" alt="Thumbs up" style="width: 20px; height: 20px; border: none !important;">Helpful
+            </button>
+            <button type="submit" class="plausible-event-name=Negative+Rating plausible-event-page=/code/cookbook/luxon/ n8n-feedback-button-negative" onclick="handleRating('negative')">
+                <img src="/_images/assets/thumb_down.png" alt="Thumbs down" style="width: 20px; height: 20px; border: none !important;">Not helpful
+            </button>
+        </div>
+        
+        <div id="n8n-feedback-thank-you-message" style="display: none;">
+            Thanks for your feedback!
+        </div>
+        
+        <div id="n8n-feedback-comment" style="display: none;">
+            <div class="n8n-feedback-comment-inner">
+                <input type="text" name="n8n-feedback-input" id="n8n-feedback-input" placeholder="This page needs...">
+                <button type="submit" class="n8n-feedback-submit-button" onclick="submitFeedback()">
+                    Submit
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+
+              </article>
+            </div>
+          
+
+
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.top", "navigation.tabs", "navigation.sections", "navigation.path", "navigation.tracking", "navigation.footer", "content.code.copy", "content.action.edit", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+  <!-- Add scripts that need to run before here -->
+	<script>
+	//Initialize the Kapa object
+	(function () {
+	let k = window.Kapa;
+	if (!k) {
+		let i = function () {
+			i.c(arguments);
+		};
+		i.q = [];
+		i.c = function (args) {
+			i.q.push(args);
+		};
+		window.Kapa = i;
+	}
+	})();
+	</script>
+
+  
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+        <script src="../../../_extra/javascript/feedback.js"></script>
+      
+        <script src="../../../_extra/javascript/kapa_widget.js"></script>
+      
+    
+  <!-- Add scripts that need to run afterwards here -->
+  <script>
+	// Track video plays with Plausible
+	if (document.readyState === 'loading') { 
+  		document.addEventListener('DOMContentLoaded', trackVideoWithPlausible);
+	} else { 
+		trackVideoWithPlausible();
+	}
+
+	// used for tracking time played even when multiple videos on page
+	var videoTrackingObj = {};
+
+
+	function trackVideoWithPlausible() {
+	  // If Plausible does not exist, stop
+	  if (typeof plausible !== "function") {
+		return;
+	  }
+	  // If there are no videos on page, stop
+	  const videos = document.querySelectorAll("video");
+	  if (videos.length === 0) {
+		return;
+	  }
+	  // Add event listeners
+	  videos.forEach((video) => {	
+		// for <video src="">
+		if (video.src) {	
+        videoTrackingObj[new URL(video.src).pathname] =  {
+			"played": false,
+		    "played25": false,
+		    "played50": false,
+	        "played75": false
+		  }
+		} else if (video.getElementsByTagName('source').length > 0) {
+			videoTrackingObj[new URL(video.getElementsByTagName('source')[0].src).pathname] =  {
+			"played": false,
+		    "played25": false,
+		    "played50": false,
+	        "played75": false
+		  }
+		} else {
+			let currentPage = window.location.href;
+			fetch('https://internal.users.n8n.cloud/webhook/docs-video-not-tracking?docsPage='+currentPage);
+		}
+		
+		video.addEventListener("play", trackVideoPlayWithPlausible);
+		video.addEventListener("timeupdate", trackTimeIntervalsWithPlausible);
+		video.addEventListener("ended", trackVideoEndedWithPlausible);
+	  });
+	}
+
+	function trackVideoPlayWithPlausible(event) {
+	  let pagePath = new URL(event.target.baseURI).pathname;
+	  let videoPath = new URL(event.target.currentSrc).pathname;
+	  // Only register the first play event
+	  if (videoTrackingObj[videoPath].played === true) {
+		return;
+	  }
+	  // Track play
+	  plausible("Video: Play", { props: { page: pagePath, video: videoPath } });
+	  videoTrackingObj[videoPath].played === true;
+	}
+
+	function trackTimeIntervalsWithPlausible(event) {
+	  let pagePath = new URL(event.target.baseURI).pathname;
+	  let videoPath = new URL(event.target.currentSrc).pathname;
+	  // If less than 25% played, do nothing
+	  if (event.target.currentTime < (event.target.duration / 4)) {
+		return;
+	  }
+	  if (event.target.currentTime > (event.target.duration / 4) && event.target.currentTime < (event.target.duration / 2) && videoTrackingObj[videoPath].played25 === false) {
+	    plausible("Video: 25% Played", { props: { page: pagePath, video: videoPath } });
+		videoTrackingObj[videoPath].played25 = true;
+	  }
+	  if (event.target.currentTime > (event.target.duration / 2) && event.target.currentTime < ((event.target.duration / 4) * 3) && videoTrackingObj[videoPath].played50 === false) {
+	    plausible("Video: 50% Played", { props: { page: pagePath, video: videoPath } });
+		videoTrackingObj[videoPath].played50 = true;
+	  }
+	  if (event.target.currentTime > ((event.target.duration / 4) * 3) && videoTrackingObj[videoPath].played75 === false) {
+	    plausible("Video: 75% Played", { props: { page: pagePath, video: videoPath } });
+		videoTrackingObj[videoPath].played75 = true;
+	  }
+
+	}
+
+	function trackVideoEndedWithPlausible(event) {
+	  let pagePath = new URL(event.target.baseURI).pathname;
+	  let videoPath = new URL(event.target.currentSrc).pathname;
+	  // Track video reached end
+	  plausible("Video: Ended", { props: { page: pagePath, video: videoPath } });
+	}
+  </script>
+
+  <!---->
+
+  
+<script id="init-glightbox">document.querySelectorAll('.glightbox').forEach(function(element) {
+    try {
+        var img = element.querySelector('img');
+        if (img && img.src) {
+            element.setAttribute('href', img.src);
+        } else {
+            console.log('No img element with src attribute found');
+        }
+    } catch (error) {
+        console.log('Error:', error);
+    }
+});
+const lightbox = GLightbox({"touchNavigation": false, "loop": false, "zoomable": false, "draggable": false, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

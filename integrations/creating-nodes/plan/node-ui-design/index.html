@@ -1,0 +1,1775 @@
+<html lang="en" class="no-js"><head><link href="../../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head><body dir="ltr" data-md-color-scheme="light" data-md-color-primary="indigo" data-md-color-accent="indigo">﻿
+
+
+  
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for n8n, a workflow automation platform.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.n8n.io/integrations/creating-nodes/plan/node-ui-design/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../../_images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+
+
+<title>Design your node's user interface | n8n Docs  </title>
+
+
+
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-K86VCV3');</script>
+	<!-- End Google Tag Manager -->
+
+
+<!-- Plausible analytics -->
+<!--
+https://plausible.io/docs/script-extensions?ref=ryansechrest.com#all-our-script-extensions
+ -->
+
+<script defer event-content_type="reference" data-domain="docs.n8n.io" src="https://plausible.io/js/script.file-downloads.outbound-links.pageview-props.tagged-events.js"></script>
+<script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+
+
+
+
+<!-- n8n Workflow Preview Service -->
+<script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2.0.0/webcomponents-loader.js"></script>
+<script src="https://www.unpkg.com/lit@2.0.0-rc.2/polyfill-support.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@n8n_io/n8n-demo-component/n8n-demo.bundled.js"></script>
+
+
+
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../_extra/css/extra.css">
+    
+      <link rel="stylesheet" href="../../../../_extra/css/macro-styles.css">
+    
+      <link rel="stylesheet" href="../../../../_extra/css/templates-widget.css">
+    
+      <link rel="stylesheet" href="../../../../_extra/css/workflow-demo.css">
+    
+      <link rel="stylesheet" href="../../../../_extra/css/feedback.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-0SC4FF2FH9"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-0SC4FF2FH9",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-0SC4FF2FH9",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+<meta name="ahrefs-site-verification" content="b13556bca44be7ae858f67ddbdd71eaa177d9389a88eb295244299a87292d60a">
+
+  
+  
+  
+    
+    
+    
+    
+    
+    
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#design-your-nodes-user-interface" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      ﻿<!-- Determine base classes -->
+
+
+
+<!-- Header -->
+<header class="md-header" data-md-component="header">
+
+  <nav class="md-header__inner md-grid" aria-label="header.title">
+
+    <!-- Link to home -->
+    <a href="../../../.." title="n8n Docs" class="md-header__button md-logo" aria-label="n8n Docs" data-md-component="logo">
+      
+  <img src="../../../../_images/n8n-docs-icon.svg" alt="logo">
+
+    </a>
+
+    <!-- Button to open drawer -->
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+
+    <!-- Header title -->
+		<!-- n8n CUSTOM: remove the page title section. This pairs with custom CSS to keep the site
+		title in place on scroll -->
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            n8n Docs
+          </span>
+        </div>
+        </div>
+      </div>
+    
+
+    <!-- Color palette -->
+    
+
+    <!-- User preference: color palette -->
+    
+
+    <!-- Site language selector -->
+    
+    
+  <!-- n8n CUSTOM: Kapa -->
+  ﻿<!-- Determine whether to show kapa button -->
+
+
+
+<!-- n8n CUSTOM: Kapa -->
+
+
+<button class="n8n-kapa-button plausible-event-name=Kapa+Button+Top" onclick="window.Kapa.open({ 
+    mode: 'ai'
+    })" type="button">
+    <span class="md-search__icon md-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m19 1-1.26 2.75L15 5l2.74 1.26L19 9l1.25-2.74L23 5l-2.75-1.25M9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5M19 15l-1.26 2.74L15 19l2.74 1.25L19 23l1.25-2.75L23 19l-2.75-1.26"></path></svg></span><span class="n8n-search-text">Chat with the docs</span>
+</button>
+
+  
+
+  <!-- Button to open search modal -->
+    
+      
+
+      <!-- Check if search is actually enabled - see https://t.ly/DT_0V -->
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+
+        <!-- Search interface -->
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+
+    <!-- Repository information -->
+	  <!-- n8n CUSTOM: don't show GitHub link -->
+  </nav>
+
+  <!-- Navigation tabs (sticky) -->
+  
+</header>
+
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            ﻿
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid n8n-other-sites">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../workflows/getting-started.md" class="md-tabs__link">
+          
+  
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../nodes/overview.md" class="md-tabs__link">
+          
+  
+  
+  Nodes
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../api/api-reference/" class="md-tabs__link">
+          
+  
+  
+  API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview.md" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../troubleshooting/common-issues.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../about.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+	<!-- n8n CUSTOM: additional nav to link to other n8n sites -->
+	<ul class="md-tabs__list">
+		<li class="md-tabs__item"><a href="https://n8n.io/" class="md-tabs__link" target="_blank">n8n home 鈫?/a&gt;</a></li><a href="https://n8n.io/" class="md-tabs__link" target="_blank">
+		</a><li class="md-tabs__item"><a href="https://n8n.io/" class="md-tabs__link" target="_blank"></a><a href="https://community.n8n.io/" class="md-tabs__link" target="_blank">Forum 鈫?/a&gt;</a></li><a href="https://community.n8n.io/" class="md-tabs__link" target="_blank">
+		</a><li class="md-tabs__item"><a href="https://community.n8n.io/" class="md-tabs__link" target="_blank"></a><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">Tutorials (blog) 鈫?/a&gt;</a></li><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+	  </a></ul><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+  </a></div><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+</a></nav><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+
+          
+        
+      
+      </a><main class="md-main" data-md-component="main"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+        </a><div class="md-main__inner md-grid"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+          
+            
+              
+              </a><div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+                </a><div class="md-sidebar__scrollwrap"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+                  </a><div class="md-sidebar__inner"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+                    ﻿<!--
+  Copyright (c) 2016-2025 Martin Donath <martin.donath@squidfunk.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+-->
+
+
+
+<!-- Determine classes -->
+
+
+  
+
+
+
+<!-- Navigation -->
+</a><nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0"><a href="https://blog.n8n.io/tag/tutorial/" class="md-tabs__link" target="_blank">
+
+  <!-- Site title -->
+  <label class="md-nav__title" for="__drawer">
+    </label></a><a href="../../../.." title="n8n Docs" class="md-nav__button md-logo" aria-label="n8n Docs" data-md-component="logo">
+      
+  <img src="../../../../_images/n8n-docs-icon.svg" alt="logo">
+
+    </a>
+    n8n Docs
+  
+
+  <!-- n8n CUSTOM: don't show repo link -->
+  
+
+  <!-- Navigation list -->
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../workflows/getting-started.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../workflows/executions/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Debug and re-run past executions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../workflows/executions/dirty-nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Dirty nodes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../workflows/executions/manual-partial-and-production-executions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual, partial, and production executions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../workflows/executions/single-workflow-executions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow-level executions list
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Nodes
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Nodes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../nodes/overview.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../nodes/community-nodes.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4">
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Api reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Integrations
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Integrations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../overview.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-node.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../troubleshooting/common-issues.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../about.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design guidance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#standards" class="md-nav__link">
+    <span class="md-ellipsis">
+      Standards
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Standards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ui-text-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      UI text style
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ui-text-terminology" class="md-nav__link">
+    <span class="md-ellipsis">
+      UI text terminology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node naming conventions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showing-and-hiding-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Showing and hiding fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conventions-by-field-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conventions by field type
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conventions by field type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Credentials
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources-and-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resources and operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Required fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toggles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Toggles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lists
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trigger-node-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trigger node inputs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subtitles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subtitles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      IDs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dates-and-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dates and timestamps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSON
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-icons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node icons
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-patterns-and-exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common patterns and exceptions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common patterns and exceptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simplify-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Simplify responses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upsert-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Upsert operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boolean-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Boolean operators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-keys-or-binary-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Source keys or binary properties
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K86VCV3" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+
+                  
+
+﻿<!--
+  Copyright (c) 2016-2024 Martin Donath <martin.donath@squidfunk.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+-->
+
+<!-- Actions -->
+
+
+  <!-- Edit button -->
+<!-- n8n CUSTOM: open in new tab -->
+  
+    <a href="https://github.com/n8n-io/n8n-docs/edit/main/docs/integrations/creating-nodes/plan/node-ui-design.md" title="Edit this page" class="md-content__button md-icon" target="_blank">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+
+  <!-- View button -->
+  
+
+
+
+<h1 id="design-your-nodes-user-interface">Design your node's user interface<a class="headerlink" href="#design-your-nodes-user-interface" title="Permanent link">#</a></h1>
+<p>Most nodes are a GUI (graphical user interface) representation of an API. Designing the interface means finding a user-friendly way to represent API endpoints and parameters. Directly translating an entire API into form fields in a node may not result in a good user experience.</p>
+<p>This document provides design guidance and standards to follow. These guidelines are the same as those used by n8n. This helps provide a smooth and consistent user experience for users mixing community and built-in nodes.</p>
+<h2 id="design-guidance">Design guidance<a class="headerlink" href="#design-guidance" title="Permanent link">#</a></h2>
+<p>All node's use n8n's <a href="/integrations/creating-nodes/build/reference/ui-elements.md">node UI elements</a>, so you don't need to consider style details such as colors, borders, and so on. However, it's still useful to go through a basic design process:</p>
+<ul>
+<li>Review the documentation for the API you're integrating. Ask yourself:<ul>
+<li>What can you leave out? </li>
+<li>What can you simplify?</li>
+<li>Which parts of the API are confusing? How can you help users understand them?</li>
+</ul>
+</li>
+<li>Use a wireframe tool to try out your field layout. If you find your node has a lot of fields and is getting confusing, consider n8n's guidance on <a href="#showing-and-hiding-fields">showing and hiding fields</a>.</li>
+</ul>
+<h2 id="standards">Standards<a class="headerlink" href="#standards" title="Permanent link">#</a></h2>
+<h3 id="ui-text-style">UI text style<a class="headerlink" href="#ui-text-style" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Style</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drop-down value</td>
+<td>Title case</td>
+</tr>
+<tr>
+<td>Hint</td>
+<td>Sentence case</td>
+</tr>
+<tr>
+<td>Info box</td>
+<td>Sentence case. Don't use a period (<code>.</code>) for one-sentence information. Always use a period if there's more than one sentence. This field can include links, which should open in a new tab.</td>
+</tr>
+<tr>
+<td>Node name</td>
+<td>Title case</td>
+</tr>
+<tr>
+<td>Parameter name</td>
+<td>Title case</td>
+</tr>
+<tr>
+<td>Subtitle</td>
+<td>Title case</td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td>Sentence case. Don't use a period (<code>.</code>) for one-sentence tooltips. Always use a period if there's more than one sentence. This field can include links, which should open in a new tab.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ui-text-terminology">UI text terminology<a class="headerlink" href="#ui-text-terminology" title="Permanent link">#</a></h3>
+<ul>
+<li>Use the same terminology as the service the node connects to. For example, a Notion node should refer to Notion blocks, not Notion paragraphs, because Notion calls these elements blocks. There are exceptions to this rule, usually to avoid technical terms (for example, refer to the guidance on <a href="#upsert-operations">name and description for upsert operations</a>).</li>
+<li>Sometimes a service has different terms for something in its API and in its GUI. Use the GUI language in your node, as this is what most users are familiar with. If you think some users may need to refer to the service's API docs, consider including this information in a hint.</li>
+<li>Don't use technical jargon when there are simpler alternatives.</li>
+<li>Be consistent when naming things. For example, choose one of <code>directory</code> or <code>folder</code> then stick to it. </li>
+</ul>
+<h3 id="node-naming-conventions">Node naming conventions<a class="headerlink" href="#node-naming-conventions" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Convention</th>
+<th>Correct</th>
+<th>Incorrect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>If a node is a trigger node, <br>the displayed name should have 'Trigger' at the end, <br>with a space before.</td>
+<td>Shopify Trigger</td>
+<td>ShopifyTrigger, Shopify trigger</td>
+</tr>
+<tr>
+<td>Don't include 'node' in the name.</td>
+<td>Asana</td>
+<td>Asana Node, Asana node</td>
+</tr>
+</tbody>
+</table>
+<h3 id="showing-and-hiding-fields">Showing and hiding fields<a class="headerlink" href="#showing-and-hiding-fields" title="Permanent link">#</a></h3>
+<p>Fields can either be:</p>
+<ul>
+<li>Displayed when the node opens: use this for resources and operations, and required fields.</li>
+<li>Hidden in the <strong>Optional fields</strong> section until a user clicks on that section: use this for optional fields.</li>
+</ul>
+<p>Progressively disclose complexity: hide a field until any earlier fields it depends on have values. For example, if you have a <strong>Filter by date</strong> toggle, and a <strong>Date to filter by</strong> datepicker, don't display <strong>Date to filter by</strong> until the user enables <strong>Filter by date</strong>.</p>
+<h3 id="conventions-by-field-type">Conventions by field type<a class="headerlink" href="#conventions-by-field-type" title="Permanent link">#</a></h3>
+<h4 id="credentials">Credentials<a class="headerlink" href="#credentials" title="Permanent link">#</a></h4>
+<p>n8n automatically displays credential fields as the top fields in the node.</p>
+<h4 id="resources-and-operations">Resources and operations<a class="headerlink" href="#resources-and-operations" title="Permanent link">#</a></h4>
+<p>APIs usually involve doing something to data. For example, "get all tasks." In this example, "task" is the resource, and "get all" is the operation.</p>
+<p>When your node has this resource and operation pattern, your first field should be <strong>Resource</strong>, and your second field should be <strong>Operation</strong>.</p>
+<h4 id="required-fields">Required fields<a class="headerlink" href="#required-fields" title="Permanent link">#</a></h4>
+<p>Order fields by:</p>
+<ul>
+<li>Most important to least important.</li>
+<li>Scope: from broad to narrow. For example, you have fields for <strong>Document</strong>, <strong>Page</strong>, and <strong>Text to insert</strong>, put them in that order.</li>
+</ul>
+<h4 id="optional-fields">Optional fields<a class="headerlink" href="#optional-fields" title="Permanent link">#</a></h4>
+<ul>
+<li>Order fields alphabetically. To group similar things together, you can rename them. For example, rename <strong>Email</strong> and <strong>Secondary Email</strong> to <strong>Email (primary)</strong> and <strong>Email (secondary)</strong>.</li>
+<li>If an optional field has a default value that the node uses when the value isn't set, load the field with that value. Explain this in the field description. For example, <strong>Defaults to false</strong>.</li>
+<li>Connected fields: if one optional fields is dependent on another, bundle them together. They should both be under a single option that shows both fields when selected.</li>
+<li>If you have a lot of optional fields, consider grouping them by theme.</li>
+</ul>
+<h4 id="help">Help<a class="headerlink" href="#help" title="Permanent link">#</a></h4>
+<p>There are five types of help built in to the GUI:</p>
+<ul>
+<li>Info boxes: yellow boxes that appear between fields. Refer to <a href="/integrations/creating-nodes/build/reference/ui-elements.md#notice">UI elements | Notice</a> for more information.</li>
+<li>Use info boxes for essential information. Don't over-use them. By making them rare, they stand out more and grab the user's attention.</li>
+<li>Parameter hints: lines of text displayed beneath a user input field. Use this when there's something the user needs to know, but an info box would be excessive.</li>
+<li>Node hints: provide help in the input panel, output panel, or node details view. Refer to <a href="/integrations/creating-nodes/build/reference/ui-elements.md#hints">UI elements | Hints</a> for more information.</li>
+<li>Tooltips: callouts that appear when the user hovers over the tooltip icon <a class="glightbox" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="&quot;Screenshot of the tooltip icon. The icon is a ? in a grey circle&quot;" src="/_images/common-icons/help-tooltip.png"></a>. Use tooltips for extra information that the user might need.</li>
+<li>You don't have to provide a tooltip for every field. Only add one if it contains useful information. </li>
+<li>When writing tooltips, think about what the user needs. Don't just copy-paste API parameter descriptions. If the description doesn't make sense, or has errors, improve it.</li>
+<li>Placeholder text: n8n can display placeholder text in a field where the user hasn't entered a value. This can help the user know what's expected in that field.</li>
+</ul>
+<p>Info boxes, hints, and tooltips can contain links to more information.</p>
+<h4 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">#</a></h4>
+<p>Make it clear which fields are required.</p>
+<p>Add validation rules to fields if possible. For example, check for valid email patterns if the field expects an email.</p>
+<p>When displaying errors, make sure only the main error message displays in the red error title. More information should go in <strong>Details</strong>.</p>
+<p>Refer to <a href="/integrations/creating-nodes/build/reference/error-handling.md">Node Error Handling</a> for more information.</p>
+<h4 id="toggles">Toggles<a class="headerlink" href="#toggles" title="Permanent link">#</a></h4>
+<ul>
+<li>Tooltips for binary states should start with something like <strong>Whether to . . . </strong>.</li>
+<li>You may need a list rather than a toggle:<ul>
+<li>Use toggles when it's clear what happens in a false state. For example, <strong>Simplify Output?</strong>. The alternative (don't simplify output) is clear.</li>
+<li>Use a dropdown list with named options when you need more clarity. For example, <strong>Append?</strong>. What happens if you don't append is unclear (it could be that nothing happens, or information is overwritten, or discarded).</li>
+</ul>
+</li>
+</ul>
+<h4 id="lists">Lists<a class="headerlink" href="#lists" title="Permanent link">#</a></h4>
+<ul>
+<li>Set default values for lists whenever possible. The default should be the most-used option.</li>
+<li>Sort list options alphabetically.</li>
+<li>You can include list option descriptions. Only add descriptions if they provide useful information.</li>
+<li>If there is an option like <strong>All</strong>, use the word <strong>All</strong>, not shorthand like <strong>*</strong>.</li>
+</ul>
+<h4 id="trigger-node-inputs">Trigger node inputs<a class="headerlink" href="#trigger-node-inputs" title="Permanent link">#</a></h4>
+<p>When a trigger node has a parameter for specifying which events to trigger on:</p>
+<ul>
+<li>Name the parameter <strong>Trigger on</strong>.</li>
+<li>Don't include a tooltip.</li>
+</ul>
+<h4 id="subtitles">Subtitles<a class="headerlink" href="#subtitles" title="Permanent link">#</a></h4>
+<p>Set subtitles based on the values of the main parameters. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">subtitle</span><span class="o">:</span><span class="w"> </span><span class="s1">'={{$parameter["operation"] + ": " + $parameter["resource"]}}'</span><span class="p">,</span>
+</code></pre></div>
+<h4 id="ids">IDs<a class="headerlink" href="#ids" title="Permanent link">#</a></h4>
+<p>When performing an operation on a specific record, such as "update a task comment" you need a way to specify which record you want to change.</p>
+<ul>
+<li>Wherever possible, provide two ways to specify a record:<ul>
+<li>By choosing from a pre-populated list. You can generate this list using the <code>loadOptions</code> parameter. Refer to <a href="/integrations/creating-nodes/build/reference/node-base-files/index.md">Base files</a> for more information.</li>
+<li>By entering an ID.</li>
+</ul>
+</li>
+<li>Name the field <code>&lt;Record name&gt; name or ID</code>. For example, <strong>Workspace Name or ID</strong>. Add a tooltip saying "Choose a name from the list, or specify an ID using an expression." Link to n8n's <a href="/code/expressions.md">Expressions</a> documentation.</li>
+<li>Build your node so that it can handle users providing more information than required. For example:<ul>
+<li>If you need a relative path, handle the user pasting in the absolute path.</li>
+<li>If the user needs to get an ID from a URL, handle the user pasting in the entire URL.</li>
+</ul>
+</li>
+</ul>
+<h4 id="dates-and-timestamps">Dates and timestamps<a class="headerlink" href="#dates-and-timestamps" title="Permanent link">#</a></h4>
+<p>n8n uses <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO timestamp strings</a> for dates and times. Make sure that any date or timestamp field you add supports all ISO 8601 formats.</p>
+<h4 id="json">JSON<a class="headerlink" href="#json" title="Permanent link">#</a></h4>
+<p>You should support two ways of specifying the content of a text input that expects JSON:</p>
+<ul>
+<li>Typing JSON directly into the text input: you need to parse the resulting string into a JSON object.</li>
+<li>Using an expression that returns JSON.</li>
+</ul>
+<h4 id="node-icons">Node icons<a class="headerlink" href="#node-icons" title="Permanent link">#</a></h4>
+<h3 id="common-patterns-and-exceptions">Common patterns and exceptions<a class="headerlink" href="#common-patterns-and-exceptions" title="Permanent link">#</a></h3>
+<p>This section provides guidance on handling common design patterns, including some edge cases and exceptions to the main standards.</p>
+<h4 id="simplify-responses">Simplify responses<a class="headerlink" href="#simplify-responses" title="Permanent link">#</a></h4>
+<p>APIs can return a lot of data that isn't useful. Consider adding a toggle that allows users to choose to simplify the response data:</p>
+<ul>
+<li>Name: <strong>Simplify Response</strong></li>
+<li>Description: <strong>Whether to return a simplified version of the response instead of the raw data</strong></li>
+</ul>
+<h4 id="upsert-operations">Upsert operations<a class="headerlink" href="#upsert-operations" title="Permanent link">#</a></h4>
+<p>This should always be a separate operation with:</p>
+<ul>
+<li>Name: <strong>Create or Update</strong></li>
+<li>Description: <strong>Create a new record, or update the current one if it already exists (upsert)</strong></li>
+</ul>
+<h4 id="boolean-operators">Boolean operators<a class="headerlink" href="#boolean-operators" title="Permanent link">#</a></h4>
+<!-- vale off -->
+<p>n8n doesn't have good support for combining boolean operators, such as AND and OR, in the GUI. Whenever possible, provide options for all ANDs or all ORs.</p>
+<!-- vale on -->
+
+<p>For example, you have a field called <strong>Must match</strong> to test if values match. Include options to test for <strong>Any</strong> and <strong>All</strong>, as separate options.</p>
+<h4 id="source-keys-or-binary-properties">Source keys or binary properties<a class="headerlink" href="#source-keys-or-binary-properties" title="Permanent link">#</a></h4>
+<p>Binary data is file data, such as spreadsheets or images. In n8n, you need a named key to reference the data. Don't use the terms "binary data" or "binary property" for this field. Instead, use a more descriptive name: <strong>Input data field name</strong> / <strong>Output data field name</strong>.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+
+
+
+
+                
+
+	﻿<!-- Determine whether to show kapa button -->
+
+
+
+<!-- n8n CUSTOM: Kapa -->
+
+
+<div class="n8n-wrap-kapa">
+  <button class="n8n-kapa-button plausible-event-name=Kapa+Button+Page+Bottom" onclick="window.Kapa.open({ 
+    mode: 'ai'
+    })" type="button">
+    <span class="md-search__icon md-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m19 1-1.26 2.75L15 5l2.74 1.26L19 9l1.25-2.74L23 5l-2.75-1.25M9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5M19 15l-1.26 2.74L15 19l2.74 1.25L19 23l1.25-2.75L23 19l-2.75-1.26"></path></svg></span><span class="n8n-search-text">Chat with the docs</span>
+</button>
+</div>
+
+
+
+﻿<!-- n8n CUSTOM
+ This is a custom partial created by n8n (it isn't part of Material for MkDocs)
+
+ We add it to the site by including it in _overrides/main.html
+ It relies on docs/_extra/javascript/feedback.js to handle the behavior
+ And docs/_extra/css/feedback.css to handle the styling
+ -->
+
+<!-- Determine feedback configuration -->
+
+  
+
+
+<!-- Determine whether to show feedback -->
+
+
+<!-- Was this page helpful? -->
+
+  <div class="n8n-feedback-container">
+        <div id="n8n-ratings-feedback">
+            <span>This page was</span>
+            <button type="submit" class="plausible-event-name=Positive+Rating plausible-event-page=/integrations/creating-nodes/plan/node-ui-design/ n8n-feedback-button-positive" onclick="handleRating('positive')">
+                <img src="/_images/assets/thumb_up.png" alt="Thumbs up" style="width: 20px; height: 20px; border: none !important;">Helpful
+            </button>
+            <button type="submit" class="plausible-event-name=Negative+Rating plausible-event-page=/integrations/creating-nodes/plan/node-ui-design/ n8n-feedback-button-negative" onclick="handleRating('negative')">
+                <img src="/_images/assets/thumb_down.png" alt="Thumbs down" style="width: 20px; height: 20px; border: none !important;">Not helpful
+            </button>
+        </div>
+        
+        <div id="n8n-feedback-thank-you-message" style="display: none;">
+            Thanks for your feedback!
+        </div>
+        
+        <div id="n8n-feedback-comment" style="display: none;">
+            <div class="n8n-feedback-comment-inner">
+                <input type="text" name="n8n-feedback-input" id="n8n-feedback-input" placeholder="This page needs...">
+                <button type="submit" class="n8n-feedback-submit-button" onclick="submitFeedback()">
+                    Submit
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+
+              </article>
+            </div>
+          
+
+
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.top", "navigation.tabs", "navigation.sections", "navigation.path", "navigation.tracking", "navigation.footer", "content.code.copy", "content.action.edit", "content.tooltips"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+  <!-- Add scripts that need to run before here -->
+	<script>
+	//Initialize the Kapa object
+	(function () {
+	let k = window.Kapa;
+	if (!k) {
+		let i = function () {
+			i.c(arguments);
+		};
+		i.q = [];
+		i.c = function (args) {
+			i.q.push(args);
+		};
+		window.Kapa = i;
+	}
+	})();
+	</script>
+
+  
+      <script src="../../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+        <script src="../../../../_extra/javascript/feedback.js"></script>
+      
+        <script src="../../../../_extra/javascript/kapa_widget.js"></script>
+      
+    
+  <!-- Add scripts that need to run afterwards here -->
+  <script>
+	// Track video plays with Plausible
+	if (document.readyState === 'loading') { 
+  		document.addEventListener('DOMContentLoaded', trackVideoWithPlausible);
+	} else { 
+		trackVideoWithPlausible();
+	}
+
+	// used for tracking time played even when multiple videos on page
+	var videoTrackingObj = {};
+
+
+	function trackVideoWithPlausible() {
+	  // If Plausible does not exist, stop
+	  if (typeof plausible !== "function") {
+		return;
+	  }
+	  // If there are no videos on page, stop
+	  const videos = document.querySelectorAll("video");
+	  if (videos.length === 0) {
+		return;
+	  }
+	  // Add event listeners
+	  videos.forEach((video) => {	
+		// for <video src="">
+		if (video.src) {	
+        videoTrackingObj[new URL(video.src).pathname] =  {
+			"played": false,
+		    "played25": false,
+		    "played50": false,
+	        "played75": false
+		  }
+		} else if (video.getElementsByTagName('source').length > 0) {
+			videoTrackingObj[new URL(video.getElementsByTagName('source')[0].src).pathname] =  {
+			"played": false,
+		    "played25": false,
+		    "played50": false,
+	        "played75": false
+		  }
+		} else {
+			let currentPage = window.location.href;
+			fetch('https://internal.users.n8n.cloud/webhook/docs-video-not-tracking?docsPage='+currentPage);
+		}
+		
+		video.addEventListener("play", trackVideoPlayWithPlausible);
+		video.addEventListener("timeupdate", trackTimeIntervalsWithPlausible);
+		video.addEventListener("ended", trackVideoEndedWithPlausible);
+	  });
+	}
+
+	function trackVideoPlayWithPlausible(event) {
+	  let pagePath = new URL(event.target.baseURI).pathname;
+	  let videoPath = new URL(event.target.currentSrc).pathname;
+	  // Only register the first play event
+	  if (videoTrackingObj[videoPath].played === true) {
+		return;
+	  }
+	  // Track play
+	  plausible("Video: Play", { props: { page: pagePath, video: videoPath } });
+	  videoTrackingObj[videoPath].played === true;
+	}
+
+	function trackTimeIntervalsWithPlausible(event) {
+	  let pagePath = new URL(event.target.baseURI).pathname;
+	  let videoPath = new URL(event.target.currentSrc).pathname;
+	  // If less than 25% played, do nothing
+	  if (event.target.currentTime < (event.target.duration / 4)) {
+		return;
+	  }
+	  if (event.target.currentTime > (event.target.duration / 4) && event.target.currentTime < (event.target.duration / 2) && videoTrackingObj[videoPath].played25 === false) {
+	    plausible("Video: 25% Played", { props: { page: pagePath, video: videoPath } });
+		videoTrackingObj[videoPath].played25 = true;
+	  }
+	  if (event.target.currentTime > (event.target.duration / 2) && event.target.currentTime < ((event.target.duration / 4) * 3) && videoTrackingObj[videoPath].played50 === false) {
+	    plausible("Video: 50% Played", { props: { page: pagePath, video: videoPath } });
+		videoTrackingObj[videoPath].played50 = true;
+	  }
+	  if (event.target.currentTime > ((event.target.duration / 4) * 3) && videoTrackingObj[videoPath].played75 === false) {
+	    plausible("Video: 75% Played", { props: { page: pagePath, video: videoPath } });
+		videoTrackingObj[videoPath].played75 = true;
+	  }
+
+	}
+
+	function trackVideoEndedWithPlausible(event) {
+	  let pagePath = new URL(event.target.baseURI).pathname;
+	  let videoPath = new URL(event.target.currentSrc).pathname;
+	  // Track video reached end
+	  plausible("Video: Ended", { props: { page: pagePath, video: videoPath } });
+	}
+  </script>
+
+  <!---->
+
+  
+<script id="init-glightbox">document.querySelectorAll('.glightbox').forEach(function(element) {
+    try {
+        var img = element.querySelector('img');
+        if (img && img.src) {
+            element.setAttribute('href', img.src);
+        } else {
+            console.log('No img element with src attribute found');
+        }
+    } catch (error) {
+        console.log('Error:', error);
+    }
+});
+const lightbox = GLightbox({"touchNavigation": false, "loop": false, "zoomable": false, "draggable": false, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
