@@ -1,0 +1,2442 @@
+{
+  "name": "Reddit监控工作流 - 11.1.2修复版",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "20b5efcc-bef3-4753-8d74-596ef0b2f4a8",
+      "name": "手动触发",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -800,
+        192
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 997707066,
+          "mode": "list",
+          "cachedResultName": "key words"
+        },
+        "options": {}
+      },
+      "id": "7bd1358d-656c-4473-a959-c7ff8a052929",
+      "name": "读取关键词表",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -576,
+        96
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 808343003,
+          "mode": "list",
+          "cachedResultName": "subreddits"
+        },
+        "options": {}
+      },
+      "id": "6204c8a8-fa81-45e5-87e0-69d3e08645e2",
+      "name": "读取频道表",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -576,
+        288
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "39f01252-1570-45d8-a882-d8d7ce77d219",
+      "name": "合并关键词和频道",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -352,
+        192
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================================\n// 交叉匹配引擎 + row_number生成\n// 功能：生成关键词×频道组合，分配row_number\n// ========================================================\n\nconst MAX_COMBINATIONS = 5;\nconst items = $input.all();\n\nif (!items || items.length === 0) {\n  throw new Error('⚠️ 没有输入数据');\n}\n\nconst keywordItems = [];\nconst subredditItems = [];\n\nfor (const item of items) {\n  const row = item.json || {};\n  if (row.Keyword || row.keyword) {\n    keywordItems.push(item);\n  } else if (row['频道名称'] || row.subreddit || row.name) {\n    subredditItems.push(item);\n  }\n}\n\nif (keywordItems.length === 0 || subredditItems.length === 0) {\n  throw new Error(`❌ 数据不足 - 关键词: ${keywordItems.length}, 频道: ${subredditItems.length}`);\n}\n\nconsole.log(`📥 关键词: ${keywordItems.length}, 频道: ${subredditItems.length}`);\n\n// 解析关键词\nconst keywords = [];\nfor (const item of keywordItems) {\n  const row = item.json || {};\n  const rawKeyword = row.Keyword || row.keyword || '';\n  const priority = row['优先级'] || row.priority || '中';\n  const category = row['类别'] || row.category || '';\n\n  if (!rawKeyword.trim()) continue;\n\n  const kwList = rawKeyword.split('|').map(k => k.trim()).filter(Boolean);\n  for (const kw of kwList) {\n    keywords.push({ keyword: kw, priority, category });\n  }\n}\n\n// 解析频道\nconst subreddits = [];\nfor (const item of subredditItems) {\n  const row = item.json || {};\n  const name = row['频道名称'] || row.subreddit || row.name || '';\n  const priority = row['优先级'] || row.priority || 'C';\n  const members = row['成员数'] || row.members || '0';\n  const classification = row['分类'] || row.classification || '';\n\n  if (!name.trim()) continue;\n\n  const cleanName = name.replace(/^r\\//, '').trim().replace(/\\s+/g, '');\n  subreddits.push({ subreddit: cleanName, priority, members, classification });\n}\n\nconsole.log(`✅ 关键词: ${keywords.length}, 频道: ${subreddits.length}`);\n\n// 生成组合 + row_number\nconst combinations = [];\nlet rowNumber = 2; // 从第2行开始（第1行是表头）\n\nfor (const kw of keywords) {\n  for (const sr of subreddits) {\n    if (combinations.length >= MAX_COMBINATIONS) break;\n\n    combinations.push({\n      row_number: rowNumber++,\n      关键词: kw.keyword,\n      keyword_priority: kw.priority,\n      keyword_category: kw.category,\n      频道: sr.subreddit,\n      subreddit_priority: sr.priority,\n      subreddit_members: sr.members,\n      subreddit_classification: sr.classification,\n      平台: 'Reddit',\n      行业: kw.category || sr.classification,\n      状态: '待处理'\n    });\n  }\n  if (combinations.length >= MAX_COMBINATIONS) break;\n}\n\nconsole.log(`✅ 生成 ${combinations.length} 个组合`);\nreturn combinations.map(c => ({ json: c }));\n"
+      },
+      "id": "d3c7bf8b-a833-44d4-8e38-f631ffc2f2fe",
+      "name": "交叉匹配引擎",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -128,
+        192
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "关键词": "={{ $json.关键词 }}",
+            "频道": "={{ $json.频道 }}",
+            "平台": "={{ $json.平台 }}",
+            "频道优先级": "={{ $json.subreddit_priority }}",
+            "关键词优先级": "={{ $json.keyword_priority }}",
+            "row_number": "={{ $json.row_number }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "关键词",
+              "displayName": "关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "关键词优先级",
+              "displayName": "关键词优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "链接",
+              "displayName": "链接",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "平台",
+              "displayName": "平台",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "频道",
+              "displayName": "频道",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "频道优先级",
+              "displayName": "频道优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "post_id",
+              "displayName": "post_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "upvote_ratio",
+              "displayName": "upvote_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "评论数",
+              "displayName": "评论数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post发布日期",
+              "displayName": "post发布日期",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "标题",
+              "displayName": "标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "原文",
+              "displayName": "原文",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "评论",
+              "displayName": "评论",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "作者",
+              "displayName": "作者",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "情绪分析",
+              "displayName": "情绪分析",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "情绪分析分数",
+              "displayName": "情绪分析分数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "痛点",
+              "displayName": "痛点",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "用户需求",
+              "displayName": "用户需求",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "竞对提及",
+              "displayName": "竞对提及",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "紧急程度",
+              "displayName": "紧急程度",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "主题/类别",
+              "displayName": "主题/类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "商业机会",
+              "displayName": "商业机会",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "转化潜力",
+              "displayName": "转化潜力",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "seo关键词",
+              "displayName": "seo关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "中文总结",
+              "displayName": "中文总结",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "linkedin创意",
+              "displayName": "linkedin创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "twitter创意",
+              "displayName": "twitter创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "facebook创意",
+              "displayName": "facebook创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "instagram创意",
+              "displayName": "instagram创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tiktok创意",
+              "displayName": "tiktok创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "youtube标题",
+              "displayName": "youtube标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "blog标题",
+              "displayName": "blog标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "comment_url_api",
+              "displayName": "comment_url_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "主题类别",
+              "displayName": "主题类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e87a151b-958f-4cb3-9247-542be1670053",
+      "name": "Append初始数据到Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        96,
+        192
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw/edit#gid=8228757"
+        },
+        "filtersUI": {},
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          }
+        }
+      },
+      "id": "ee041381-5269-4aaa-8f2a-caaad6a9c070",
+      "name": "读取已写入数据",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        320,
+        192
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// === 准备AI分析数据（仅保留标题与原文） ===\nconst data = $json;\nconst rowNumber = data.row_number || 0;\nconst postId = data.post_id || '';\nconst title = data.标题 || '';\nconst selftext = data.原文 || '';\n\n// 🚫 跳过空内容（无post_id或无正文/标题的）\nif (!postId || (!title && !selftext)) {\n  console.log(`⚠️ 行${rowNumber}: 无内容，跳过AI分析`);\n  return {\n    json: {\n      row_number: rowNumber,\n      status: '无效帖子（跳过）'\n    }\n  };\n}\n\n// ✅ 只保留分析所需的核心字段\nreturn {\n  json: {\n    row_number: rowNumber,\n    post_id: postId,\n    title: title.trim(),\n    selftext: selftext.trim(),\n  }\n};\n"
+      },
+      "id": "3bc86166-69a2-4a30-93e3-5d1be486894b",
+      "name": "准备AI分析数据",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1664,
+        96
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"你是一名拥有20年经验的国际物流与跨境电商专家，同时也是资深社交媒体顾问。请根据以下要求，输出一个格式严格、语义清晰的单一JSON对象。\\n\\n===\\n\\n✅ 要求一：生成AI分析字段（基于帖子的情绪、痛点与商业洞察）：\\n{\\n  \\\"情绪分析\\\": \\\"正面/中性/负面\\\",\\n  \\\"情绪分析分数\\\": 0-100,\\n  \\\"痛点\\\": \\\"用户主要痛点（简明扼要描述1-2句）\\\",\\n  \\\"用户需求\\\": \\\"隐含的潜在需求\\\",\\n  \\\"竞对提及\\\": \\\"提及的竞对或替代方案\\\",\\n  \\\"紧急程度\\\": \\\"高/中/低\\\",\\n  \\\"主题/类别\\\": \\\"帖子主题分类（如物流、清关、仓储、供应链、税务等）\\\",\\n  \\\"商业机会\\\": \\\"潜在商机（如服务、产品或内容机会）\\\",\\n  \\\"转化潜力\\\": \\\"高/中/低\\\",\\n  \\\"seo关键词\\\": \\\"从内容中提炼的英文SEO关键词（以逗号分隔）\\\",\\n  \\\"中文总结\\\": \\\"100字以内中文总结帖子的核心观点\\\",\\n  \\\"主题类别\\\": \\\"对整体话题进行更高层次归纳，如供应链趋势、跨境营销、合规风险等\\\"\\n}\\n\\n===\\n\\n✅ 要求二：生成社交媒体创意输出字段：\\n{\\n  \\\"linkedin创意\\\": \\\"中文简述 + 英文创作\\\",\\n  \\\"twitter创意\\\": \\\"中文简述 + 英文创作\\\",\\n  \\\"facebook创意\\\": \\\"中文简述 + 英文创作\\\",\\n  \\\"instagram创意\\\": \\\"中文简述 + 英文创作\\\",\\n  \\\"tiktok创意\\\": \\\"中文视频脚本（含镜头动作或旁白提示）+ 中文简述 + 英文创作\\\",\\n  \\\"youtube标题\\\": \\\"中文标题 + 英文SEOYouTube标题\\\",\\n  \\\"blog标题\\\": \\\"中文标题 + 英文SEO博客标题\\\"\\n}\\n\\n===\\n\\n⚠️ 输出规则：\\n- 输出单一JSON对象。\\n- 严禁输出Markdown、解释、注释或额外说明。\\n- 所有字段名称必须与上方定义一致。\\n- 确保JSON语法100%有效。\\n\\n以下是要分析的Reddit内容：\\n{{ $json.full_content }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.35,\n    \"maxOutputTokens\": 8192\n  }\n}\n",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 3000
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "cd7ac531-ac31-4aa3-9b2c-616eb48ca065",
+      "name": "Gemini AI分析",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1888,
+        96
+      ],
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zXZHicj3I5k25blp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// =======================================================\n// 🧩 Gemini JSON 解析器 - 简化版（保证输出）\n// 功能：解析Gemini API响应，输出标准化的18个字段\n// =======================================================\n\nconst input = $json;\n\n// --- 1. 保留 row_number ---\nconst row_number = $json.row_number || null;\n\n// --- 2. 提取 Gemini 响应文本 ---\nlet rawText = \"\";\ntry {\n  rawText = input.candidates?.[0]?.content?.parts?.[0]?.text || \"\";\n} catch (e) {\n  console.log(\"❌ 无法提取Gemini响应文本\");\n}\n\nif (!rawText) {\n  console.log(\"⚠️ Gemini响应为空\");\n  return {\n    json: {\n      row_number,\n      情绪分析: \"\",\n      情绪分析分数: 0,\n      痛点: \"\",\n      用户需求: \"\",\n      竞对提及: \"\",\n      紧急程度: \"\",\n      \"主题/类别\": \"\",\n      商业机会: \"\",\n      转化潜力: \"\",\n      seo关键词: \"\",\n      中文总结: \"\",\n      linkedin创意: \"\",\n      twitter创意: \"\",\n      facebook创意: \"\",\n      instagram创意: \"\",\n      tiktok创意: \"\",\n      youtube标题: \"\",\n      blog标题: \"\"\n    }\n  };\n}\n\n// --- 3. 清理文本（移除markdown标记） ---\nlet cleaned = rawText\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\n// --- 4. 提取JSON对象 ---\nlet parsed = null;\nconst jsonStart = cleaned.indexOf(\"{\");\nconst jsonEnd = cleaned.lastIndexOf(\"}\");\n\nif (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {\n  try {\n    const jsonStr = cleaned.slice(jsonStart, jsonEnd + 1);\n    parsed = JSON.parse(jsonStr);\n    console.log(\"✅ JSON解析成功\");\n  } catch (err) {\n    console.log(\"❌ JSON解析失败:\", err.message);\n    console.log(\"原始文本:\", cleaned.slice(0, 200));\n  }\n}\n\nif (!parsed || typeof parsed !== 'object') {\n  console.log(\"⚠️ 无有效JSON对象\");\n  return {\n    json: {\n      row_number,\n      情绪分析: \"\",\n      情绪分析分数: 0,\n      痛点: \"\",\n      用户需求: \"\",\n      竞对提及: \"\",\n      紧急程度: \"\",\n      \"主题/类别\": \"\",\n      商业机会: \"\",\n      转化潜力: \"\",\n      seo关键词: \"\",\n      中文总结: \"\",\n      linkedin创意: \"\",\n      twitter创意: \"\",\n      facebook创意: \"\",\n      instagram创意: \"\",\n      tiktok创意: \"\",\n      youtube标题: \"\",\n      blog标题: \"\"\n    }\n  };\n}\n\n// --- 5. 字段映射规则 ---\n// 支持多种可能的字段名称（中文、英文、带前缀等）\nfunction getValue(obj, ...keys) {\n  for (const key of keys) {\n    if (obj[key] !== undefined && obj[key] !== null) {\n      return obj[key];\n    }\n  }\n  return \"\";\n}\n\n// --- 6. 递归搜索字段（处理嵌套结构） ---\nfunction findValue(obj, targetKeys) {\n  // 直接查找\n  for (const key of targetKeys) {\n    if (obj[key] !== undefined && obj[key] !== null) {\n      return obj[key];\n    }\n  }\n\n  // 递归搜索子对象\n  for (const value of Object.values(obj)) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n      const found = findValue(value, targetKeys);\n      if (found !== \"\") return found;\n    }\n  }\n\n  return \"\";\n}\n\n// --- 7. 标准化输出（18个字段） ---\nconst output = {\n  row_number: row_number,\n\n  // 字段1: 情绪分析\n  情绪分析: findValue(parsed, [\n    \"情绪分析\", \"sentiment\", \"情感分析\",\n    \"AI分析字段.情绪分析\"\n  ]),\n\n  // 字段2: 情绪分析分数\n  情绪分析分数: parseInt(findValue(parsed, [\n    \"情绪分析分数\", \"sentiment_score\", \"情绪分数\", \"情感分数\",\n    \"AI分析字段.情绪分析分数\"\n  ])) || 0,\n\n  // 字段3: 痛点\n  痛点: findValue(parsed, [\n    \"痛点\", \"pain_points\", \"用户痛点\",\n    \"AI分析字段.痛点\"\n  ]),\n\n  // 字段4: 用户需求\n  用户需求: findValue(parsed, [\n    \"用户需求\", \"user_needs\", \"需求\",\n    \"AI分析字段.用户需求\"\n  ]),\n\n  // 字段5: 竞对提及\n  竞对提及: findValue(parsed, [\n    \"竞对提及\", \"competitor_mention\", \"竞品提及\",\n    \"AI分析字段.竞对提及\"\n  ]),\n\n  // 字段6: 紧急程度\n  紧急程度: findValue(parsed, [\n    \"紧急程度\", \"urgency\", \"优先级\",\n    \"AI分析字段.紧急程度\"\n  ]),\n\n  // 字段7: 主题/类别\n  \"主题/类别\": findValue(parsed, [\n    \"主题/类别\", \"主题类别\", \"topic_category\", \"类别\", \"主题\",\n    \"AI分析字段.主题类别\", \"AI分析字段.主题/类别\"\n  ]),\n\n  // 字段8: 商业机会\n  商业机会: findValue(parsed, [\n    \"商业机会\", \"business_opportunity\", \"机会\",\n    \"AI分析字段.商业机会\"\n  ]),\n\n  // 字段9: 转化潜力\n  转化潜力: findValue(parsed, [\n    \"转化潜力\", \"conversion_potential\", \"潜力\",\n    \"AI分析字段.转化潜力\"\n  ]),\n\n  // 字段10: seo关键词\n  seo关键词: findValue(parsed, [\n    \"seo关键词\", \"seo_keywords\", \"关键词\", \"keywords\",\n    \"AI分析字段.seo关键词\"\n  ]),\n\n  // 字段11: 中文总结\n  中文总结: findValue(parsed, [\n    \"中文总结\", \"chinese_summary\", \"总结\", \"summary\",\n    \"AI分析字段.中文总结\"\n  ]),\n\n  // 字段12: linkedin创意\n  linkedin创意: findValue(parsed, [\n    \"linkedin创意\", \"linkedin_creative\", \"linkedin\",\n    \"社交媒体创意输出字段.linkedin创意\"\n  ]),\n\n  // 字段13: twitter创意\n  twitter创意: findValue(parsed, [\n    \"twitter创意\", \"twitter_creative\", \"twitter\",\n    \"社交媒体创意输出字段.twitter创意\"\n  ]),\n\n  // 字段14: facebook创意\n  facebook创意: findValue(parsed, [\n    \"facebook创意\", \"facebook_creative\", \"facebook\",\n    \"社交媒体创意输出字段.facebook创意\"\n  ]),\n\n  // 字段15: instagram创意\n  instagram创意: findValue(parsed, [\n    \"instagram创意\", \"instagram_creative\", \"instagram\",\n    \"社交媒体创意输出字段.instagram创意\"\n  ]),\n\n  // 字段16: tiktok创意\n  tiktok创意: findValue(parsed, [\n    \"tiktok创意\", \"tiktok_creative\", \"tiktok\",\n    \"社交媒体创意输出字段.tiktok创意\"\n  ]),\n\n  // 字段17: youtube标题\n  youtube标题: findValue(parsed, [\n    \"youtube标题\", \"youtube_title\", \"youtube\",\n    \"社交媒体创意输出字段.youtube标题\"\n  ]),\n\n  // 字段18: blog标题\n  blog标题: findValue(parsed, [\n    \"blog标题\", \"blog_title\", \"blog\",\n    \"社交媒体创意输出字段.blog标题\"\n  ])\n};\n\n// --- 8. 日志输出（调试用） ---\nconsole.log(`✅ 行${row_number}: AI解析完成`);\nconsole.log(`   情绪分析: ${output.情绪分析 ? '有' : '无'}`);\nconsole.log(`   痛点: ${output.痛点 ? '有' : '无'}`);\nconsole.log(`   用户需求: ${output.用户需求 ? '有' : '无'}`);\n\n// --- 9. 返回标准化输出 ---\nreturn { json: output };\n"
+      },
+      "id": "7331d71e-9a1e-4d14-b6f8-253a335c0ac9",
+      "name": "解析AI分析结果",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2112,
+        96
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "情绪分析": "={{ $json['情绪分析'] }}",
+            "情绪分析分数": "={{ $json['情绪分析分数'] }}",
+            "痛点": "={{ $json['痛点'] }}",
+            "用户需求": "={{ $json['用户需求'] }}",
+            "竞对提及": "={{ $json['竞对提及'] }}",
+            "紧急程度": "={{ $json['紧急程度'] }}",
+            "商业机会": "={{ $json['商业机会'] }}",
+            "转化潜力": "={{ $json['转化潜力'] }}",
+            "seo关键词": "={{ $json['seo关键词'] }}",
+            "中文总结": "={{ $json['中文总结'] }}",
+            "linkedin创意": "={{ $json['linkedin创意'] }}",
+            "主题类别": "={{ $json['主题/类别'] }}",
+            "twitter创意": "={{ $json['twitter创意'] }}",
+            "facebook创意": "={{ $json['facebook创意'] }}",
+            "tiktok创意": "={{ $json['tiktok创意'] }}",
+            "instagram创意": "={{ $json['instagram创意'] }}",
+            "youtube标题": "={{ $json['youtube标题'] }}",
+            "blog标题": "={{ $json['blog标题'] }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "关键词",
+              "displayName": "关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "关键词优先级",
+              "displayName": "关键词优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "链接",
+              "displayName": "链接",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "平台",
+              "displayName": "平台",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "频道",
+              "displayName": "频道",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "频道优先级",
+              "displayName": "频道优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post_id",
+              "displayName": "post_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "upvote_ratio",
+              "displayName": "upvote_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "评论数",
+              "displayName": "评论数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post发布日期",
+              "displayName": "post发布日期",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "标题",
+              "displayName": "标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "原文",
+              "displayName": "原文",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "评论",
+              "displayName": "评论",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "作者",
+              "displayName": "作者",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "情绪分析",
+              "displayName": "情绪分析",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "情绪分析分数",
+              "displayName": "情绪分析分数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "痛点",
+              "displayName": "痛点",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "用户需求",
+              "displayName": "用户需求",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "竞对提及",
+              "displayName": "竞对提及",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "紧急程度",
+              "displayName": "紧急程度",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "主题/类别",
+              "displayName": "主题/类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "商业机会",
+              "displayName": "商业机会",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "转化潜力",
+              "displayName": "转化潜力",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "seo关键词",
+              "displayName": "seo关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "中文总结",
+              "displayName": "中文总结",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin创意",
+              "displayName": "linkedin创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "twitter创意",
+              "displayName": "twitter创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "facebook创意",
+              "displayName": "facebook创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "instagram创意",
+              "displayName": "instagram创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tiktok创意",
+              "displayName": "tiktok创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "youtube标题",
+              "displayName": "youtube标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "blog标题",
+              "displayName": "blog标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "comment_url_api",
+              "displayName": "comment_url_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "主题类别",
+              "displayName": "主题类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "339188ac-0a2d-4388-940e-40a46de97dcb",
+      "name": "更新AI分析到Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2336,
+        96
+      ],
+      "typeVersion": 4.7,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.search_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=1"
+            },
+            {
+              "name": "t",
+              "value": "week"
+            },
+            {
+              "name": "restrict_sr",
+              "value": "1"
+            },
+            {
+              "name": "sort",
+              "value": "hot"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8nio/n8n:1.117.3(u/Repulsive_Mark_7919)"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "42b81d38-bd4b-4ab1-a07e-6144b758e3df",
+      "name": "调用Reddit API (post)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        768,
+        192
+      ],
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "425YTcnxD6M8uXNU",
+          "name": "n8n rR API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 构建Reddit搜索URL\nconst item = $input.item;\nconst data = item.json || {};\n\nconst keyword = data['关键词'] || data.keyword || '';\nconst subreddit = data['频道'] || data.subreddit || '';\nconst rowNumber = data['row_number'] || 0;\n\nif (!keyword || !subreddit) {\n  console.log('❌ 缺少关键词或频道');\n  return [];\n}\n\nconst searchUrl = `https://oauth.reddit.com/r/${subreddit}/search` +\n  `?q=${encodeURIComponent(keyword)}` +\n  `&restrict_sr=1&sort=new&limit=1&t=week&include_over_18=1&raw_json=1`;\n\nreturn {\n  json: {\n    ...data,\n    row_number: rowNumber,\n    search_url: searchUrl\n  }\n};\n"
+      },
+      "id": "5c2a6374-9050-4038-b372-7bd7d28c062e",
+      "name": "构建Reddit搜索URL (post)",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        544,
+        192
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw/edit#gid=8228757"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "post_id": "={{ $json.post_id }}",
+            "链接": "={{ $json['链接'] }}",
+            "row_number": "={{ $json.row_number }}",
+            "score": "={{ $json.score }}",
+            "upvote_ratio": "={{ $json.upvote_ratio }}",
+            "评论数": "={{ $json['评论数'] }}",
+            "post发布日期": "={{ $json['post发布日期'] }}",
+            "标题": "={{ $json['标题'] }}",
+            "原文": "={{ $json['原文'] }}",
+            "作者": "={{ $json['作者'] }}",
+            "comment_url_api": "={{ $json.comments_api_url }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "关键词",
+              "displayName": "关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "关键词优先级",
+              "displayName": "关键词优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "链接",
+              "displayName": "链接",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "平台",
+              "displayName": "平台",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "频道",
+              "displayName": "频道",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "频道优先级",
+              "displayName": "频道优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post_id",
+              "displayName": "post_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "upvote_ratio",
+              "displayName": "upvote_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "评论数",
+              "displayName": "评论数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "post发布日期",
+              "displayName": "post发布日期",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "标题",
+              "displayName": "标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "原文",
+              "displayName": "原文",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "评论",
+              "displayName": "评论",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "作者",
+              "displayName": "作者",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "情绪分析",
+              "displayName": "情绪分析",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "情绪分析分数",
+              "displayName": "情绪分析分数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "痛点",
+              "displayName": "痛点",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "用户需求",
+              "displayName": "用户需求",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "竞对提及",
+              "displayName": "竞对提及",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "紧急程度",
+              "displayName": "紧急程度",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "主题/类别",
+              "displayName": "主题/类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "商业机会",
+              "displayName": "商业机会",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "转化潜力",
+              "displayName": "转化潜力",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "seo关键词",
+              "displayName": "seo关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "中文总结",
+              "displayName": "中文总结",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "linkedin创意",
+              "displayName": "linkedin创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "twitter创意",
+              "displayName": "twitter创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "facebook创意",
+              "displayName": "facebook创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "instagram创意",
+              "displayName": "instagram创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tiktok创意",
+              "displayName": "tiktok创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "youtube标题",
+              "displayName": "youtube标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "blog标题",
+              "displayName": "blog标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "comment_url_api",
+              "displayName": "comment_url_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "主题类别",
+              "displayName": "主题类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "a1ea6a92-6867-47ba-9687-5879cb23a964",
+      "name": "更新Reddit (post) 数据到Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1216,
+        192
+      ],
+      "typeVersion": 4.7,
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 提取Reddit Post数据\nconst mergedData = $json;\nconst keyword = mergedData['关键词'] || mergedData.keyword || '';\nconst subreddit = mergedData['频道'] || mergedData.subreddit || '';\nconst apiData = mergedData.data || mergedData;\nconst posts = Array.isArray(apiData.children) ? apiData.children : [];\n\nif (!posts.length) {\n  console.log(`未找到帖子: ${keyword} in ${subreddit}`);\n  return [];\n}\n\nconst post = posts[0].data;\nconst postId = post.id || '';\nconst commentsApi = postId ? `https://oauth.reddit.com/comments/${postId}.json?limit=50&depth=1&sort=top&raw_json=1` : '';\n\nconsole.log(`提取帖子: ${postId}`);\n\nreturn {\n  json: {\n    关键词: keyword,\n    频道: subreddit,\n    post_id: postId,\n    标题: (post.title || '').substring(0, 500),\n    原文: (post.selftext || '').substring(0, 20000),\n    作者: post.author || '',\n    score: Number(post.score) || 0,\n    upvote_ratio: Number(post.upvote_ratio) || 0,\n    评论数: Number(post.num_comments) || 0,\n    链接: post.permalink ? 'https://reddit.com' + post.permalink : '',\n    post发布日期: post.created_utc ? new Date(post.created_utc * 1000).toISOString().split('T')[0] : '',\n    comment_url_api: commentsApi\n  }\n};\n"
+      },
+      "id": "7caa09d7-546b-46d6-9200-90c38ca4d3f4",
+      "name": "提取Reddit数据 (post)",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        992,
+        192
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw/edit#gid=8228757"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number > 0 ? $json.row_number : 2 }}",
+            "评论": "={{ $json.top_comment_texts }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "关键词",
+              "displayName": "关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "关键词优先级",
+              "displayName": "关键词优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "链接",
+              "displayName": "链接",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "平台",
+              "displayName": "平台",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "频道",
+              "displayName": "频道",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "频道优先级",
+              "displayName": "频道优先级",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post_id",
+              "displayName": "post_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "upvote_ratio",
+              "displayName": "upvote_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "评论数",
+              "displayName": "评论数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post发布日期",
+              "displayName": "post发布日期",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "标题",
+              "displayName": "标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "原文",
+              "displayName": "原文",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "评论",
+              "displayName": "评论",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "作者",
+              "displayName": "作者",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "情绪分析",
+              "displayName": "情绪分析",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "情绪分析分数",
+              "displayName": "情绪分析分数",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "痛点",
+              "displayName": "痛点",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "用户需求",
+              "displayName": "用户需求",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "竞对提及",
+              "displayName": "竞对提及",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "紧急程度",
+              "displayName": "紧急程度",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "主题/类别",
+              "displayName": "主题/类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "商业机会",
+              "displayName": "商业机会",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "转化潜力",
+              "displayName": "转化潜力",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "seo关键词",
+              "displayName": "seo关键词",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "中文总结",
+              "displayName": "中文总结",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "linkedin创意",
+              "displayName": "linkedin创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "twitter创意",
+              "displayName": "twitter创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "facebook创意",
+              "displayName": "facebook创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "instagram创意",
+              "displayName": "instagram创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tiktok创意",
+              "displayName": "tiktok创意",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "youtube标题",
+              "displayName": "youtube标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "blog标题",
+              "displayName": "blog标题",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "comment_url_api",
+              "displayName": "comment_url_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "主题类别",
+              "displayName": "主题类别",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "7c46a968-ef2b-42bb-840e-521316cb76fe",
+      "name": "更新Reddit数据到 (comments)",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2112,
+        288
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 提取Reddit Comments数据\nconst mergedData = $json;\nconst postId = mergedData.post_id || '';\nlet commentsApiResponse = mergedData;\n\nlet commentsText = '';\nlet commentCount = 0;\n\ntry {\n  if (Array.isArray(commentsApiResponse) && commentsApiResponse.length > 1) {\n    const commentListing = commentsApiResponse[1]?.data?.children || [];\n    const validComments = commentListing.filter(c => c.kind === 't1' && c.data).slice(0, 10);\n    commentCount = validComments.length;\n    \n    validComments.forEach((comment, index) => {\n      const c = comment.data;\n      const author = c.author || '[deleted]';\n      const body = (c.body || '').substring(0, 200);\n      const score = c.score || 0;\n      commentsText += `${index + 1}. @${author} (${score}👍):\\n${body}\\n\\n`;\n    });\n    console.log(`成功抓取 ${commentCount} 条评论`);\n  }\n} catch (error) {\n  console.log(`评论处理失败: ${error.message}`);\n}\n\nreturn {\n  json: {\n    ...mergedData,\n    评论: commentsText || '暂无评论',\n    评论数量: commentCount\n  }\n};\n"
+      },
+      "id": "b4e51af3-a60c-403b-b3ca-345633f3cda5",
+      "name": "提取Reddit数据 (comments)",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1888,
+        288
+      ],
+      "typeVersion": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.comment_url_api }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8nio/n8n:1.117.3(u/Repulsive_Mark_7919)"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "c95d75db-7ef5-49b4-8aa4-a0a8e3905309",
+      "name": "调用Reddit API (comments)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1664,
+        288
+      ],
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "425YTcnxD6M8uXNU",
+          "name": "n8n rR API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw/edit#gid=8228757"
+        },
+        "options": {}
+      },
+      "id": "4519c73a-b77e-402e-9d1c-344fdd40438a",
+      "name": "读取更新 (post) 后数据",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1440,
+        192
+      ],
+      "typeVersion": 4.7,
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "4f0af451-7f1c-4142-9111-358b90ee3180",
+      "name": "合并Reddit Post数据",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1200,
+        400
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "207a6e83-4fe1-4081-a4a7-1f8f454b20ec",
+      "name": "合并Reddit Comments数据",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1800,
+        400
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FKtICtmHMvlBaP8oeF_nk9LeCL28JZ2lqmWHfIHDYaw",
+          "mode": "list",
+          "cachedResultName": "Reddit × Gemini × Google Sheets"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 8228757,
+          "mode": "list",
+          "cachedResultName": "Reddit Logistics Monitor （POST分析）"
+        },
+        "options": {}
+      },
+      "id": "28a009e5-76fc-4894-bf7f-53f50005dc7b",
+      "name": "读取完整数据（含Comments）",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2100,
+        400
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GUtZ6Mnx8dlEYNgu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "4059fe97-0e47-40bf-b03f-971c9333a6ce",
+      "name": "合并Gemini AI响应",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        2700,
+        400
+      ],
+      "typeVersion": 3
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "手动触发": {
+      "main": [
+        [
+          {
+            "node": "读取关键词表",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "读取频道表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取关键词表": {
+      "main": [
+        [
+          {
+            "node": "合并关键词和频道",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取频道表": {
+      "main": [
+        [
+          {
+            "node": "合并关键词和频道",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "合并关键词和频道": {
+      "main": [
+        [
+          {
+            "node": "交叉匹配引擎",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "交叉匹配引擎": {
+      "main": [
+        [
+          {
+            "node": "Append初始数据到Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append初始数据到Sheets": {
+      "main": [
+        [
+          {
+            "node": "读取已写入数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取已写入数据": {
+      "main": [
+        [
+          {
+            "node": "构建Reddit搜索URL (post)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "准备AI分析数据": {
+      "main": [
+        [
+          {
+            "node": "Gemini AI分析",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "合并Gemini AI响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI分析": {
+      "main": [
+        [
+          {
+            "node": "合并Gemini AI响应",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "解析AI分析结果": {
+      "main": [
+        [
+          {
+            "node": "更新AI分析到Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "调用Reddit API (post)": {
+      "main": [
+        [
+          {
+            "node": "合并Reddit Post数据",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "构建Reddit搜索URL (post)": {
+      "main": [
+        [
+          {
+            "node": "调用Reddit API (post)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "合并Reddit Post数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新Reddit (post) 数据到Sheets": {
+      "main": [
+        [
+          {
+            "node": "读取更新 (post) 后数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取Reddit数据 (post)": {
+      "main": [
+        [
+          {
+            "node": "更新Reddit (post) 数据到Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取Reddit数据 (comments)": {
+      "main": [
+        [
+          {
+            "node": "更新Reddit数据到 (comments)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "调用Reddit API (comments)": {
+      "main": [
+        [
+          {
+            "node": "合并Reddit Comments数据",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "读取更新 (post) 后数据": {
+      "main": [
+        [
+          {
+            "node": "调用Reddit API (comments)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "合并Reddit Comments数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并Reddit Post数据": {
+      "main": [
+        [
+          {
+            "node": "提取Reddit数据 (post)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并Reddit Comments数据": {
+      "main": [
+        [
+          {
+            "node": "提取Reddit数据 (comments)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新Reddit数据到 (comments)": {
+      "main": [
+        [
+          {
+            "node": "读取完整数据（含Comments）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取完整数据（含Comments）": {
+      "main": [
+        [
+          {
+            "node": "准备AI分析数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并Gemini AI响应": {
+      "main": [
+        [
+          {
+            "node": "解析AI分析结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bd69ab56-d828-42e3-8e76-8ead5c88c31f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cf3a3e94a3582062b1bbb0314be4475a417462d0865c5094dcc2ad7edb7d7989"
+  },
+  "id": "dqHhWul1DmCT19V5",
+  "tags": []
+}
