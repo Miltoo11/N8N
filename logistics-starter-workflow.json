@@ -1,0 +1,363 @@
+{
+  "name": "物流资讯入门版 - 7天快速启动",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger-001",
+      "name": "手动触发（测试用）",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        400
+      ],
+      "notes": "Day 7时替换为Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.freightwaves.com/feed",
+        "options": {
+          "itemLimit": 10
+        }
+      },
+      "id": "rss-freightwaves-001",
+      "name": "RSS源1: FreightWaves",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.supplychainbrain.com/rss",
+        "options": {
+          "itemLimit": 10
+        }
+      },
+      "id": "rss-scb-001",
+      "name": "RSS源2: SupplyChainBrain",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.joc.com/rss",
+        "options": {
+          "itemLimit": 10
+        }
+      },
+      "id": "rss-joc-001",
+      "name": "RSS源3: Journal of Commerce",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://theloadstar.com/feed/",
+        "options": {
+          "itemLimit": 10
+        }
+      },
+      "id": "rss-loadstar-001",
+      "name": "RSS源4: The Loadstar",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        650
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://gcaptain.com/feed/",
+        "options": {
+          "itemLimit": 10
+        }
+      },
+      "id": "rss-gcaptain-001",
+      "name": "RSS源5: gCaptain",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "merge-rss-001",
+      "name": "合并所有RSS源",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ========================================================\n// 📰 提取和规范化RSS数据（入门版）\n// ========================================================\n\nconst items = $input.all();\nconst results = [];\nconst seenUrls = new Set();\n\nfor (const item of items) {\n  const data = item.json || {};\n  \n  // 提取RSS标准字段\n  const title = data.title || '';\n  const link = data.link || data.url || '';\n  const description = data.description || data.content || '';\n  const pubDate = data.pubDate || data.isoDate || new Date().toISOString();\n  \n  // 简单去重（基于URL）\n  if (!link || seenUrls.has(link)) {\n    continue;\n  }\n  seenUrls.add(link);\n  \n  // 提取来源（从link域名）\n  let source = 'Unknown';\n  try {\n    const url = new URL(link);\n    source = url.hostname.replace('www.', '');\n  } catch (e) {\n    source = 'RSS';\n  }\n  \n  // 时间过滤（只保留最近7天）\n  const pubTime = new Date(pubDate).getTime();\n  const now = Date.now();\n  const sevenDays = 7 * 24 * 60 * 60 * 1000;\n  \n  if (now - pubTime > sevenDays) {\n    continue; // 跳过超过7天的\n  }\n  \n  // 格式化日期\n  let formattedDate = '';\n  try {\n    formattedDate = new Date(pubDate).toISOString().split('T')[0];\n  } catch (e) {\n    formattedDate = new Date().toISOString().split('T')[0];\n  }\n  \n  results.push({\n    json: {\n      title: title.substring(0, 500),\n      link: link,\n      source: source,\n      description: description.substring(0, 1000),\n      pub_date: formattedDate,\n      raw_content: (title + ' ' + description).toLowerCase()\n    }\n  });\n}\n\nconsole.log(`✅ 提取了 ${results.length} 条新闻`);\n\nreturn results.length > 0 ? results : [{ json: { _skip: true } }];"
+      },
+      "id": "extract-normalize-001",
+      "name": "提取和规范化数据",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 🔥 简单热度评分（关键词匹配）\n// ========================================================\n\nconst item = $json;\n\nif (item._skip) {\n  return { json: item };\n}\n\nlet score = 0;\n\n// 高价值关键词列表\nconst keywords = [\n  'strike', '罢工',\n  'port', '港口',\n  'delay', '延误',\n  'disruption', '中断',\n  'shipping', '航运',\n  'freight', '货运',\n  'container', '集装箱',\n  'supply chain', '供应链',\n  'logistics', '物流',\n  'warehouse', '仓库',\n  'customs', '海关',\n  'tariff', '关税',\n  'rate', '运费',\n  'emergency', '紧急',\n  'closure', '关闭',\n  'suspension', '暂停'\n];\n\nconst content = item.raw_content || '';\n\n// 关键词匹配评分\nlet matchCount = 0;\nfor (const keyword of keywords) {\n  if (content.includes(keyword)) {\n    matchCount++;\n  }\n}\n\nscore = Math.min(matchCount * 15, 100);\n\n// 时效性加分\nconst pubDate = new Date(item.pub_date);\nconst hoursAgo = (Date.now() - pubDate.getTime()) / (1000 * 60 * 60);\n\nif (hoursAgo < 24) {\n  score += 20;\n} else if (hoursAgo < 48) {\n  score += 10;\n}\n\nreturn {\n  json: {\n    新闻标题: item.title,\n    来源: item.source,\n    链接: item.link,\n    发布日期: item.pub_date,\n    热度评分: Math.min(score, 100),\n    关键词: matchCount > 0 ? `匹配${matchCount}个关键词` : '无关键词',\n    状态: '待处理',\n    脚本: '',\n    备注: ''\n  }\n};"
+      },
+      "id": "calc-score-001",
+      "name": "计算热度评分",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "combineOperation": "all"
+          },
+          "conditions": [
+            {
+              "id": "not-skip",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "filter-valid-001",
+      "name": "过滤有效数据",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ========================================================\n// 📦 构建飞书写入Body（简化版）\n// ========================================================\n\nconst items = $input.all();\n\nconst records = items.map(it => {\n  const j = it.json || {};\n  return {\n    fields: {\n      \"新闻标题\": String(j.新闻标题 || '').substring(0, 500),\n      \"来源\": String(j.来源 || ''),\n      \"链接\": String(j.链接 || ''),\n      \"发布日期\": String(j.发布日期 || ''),\n      \"热度评分\": Number(j.热度评分) || 0,\n      \"状态\": String(j.状态 || '待处理'),\n      \"关键词\": String(j.关键词 || ''),\n      \"脚本\": String(j.脚本 || ''),\n      \"备注\": String(j.备注 || '')\n    }\n  };\n});\n\nconsole.log(`📦 准备写入 ${records.length} 条记录`);\n\nreturn [{\n  json: {\n    body: JSON.stringify({ records: records })\n  }\n}];"
+      },
+      "id": "build-feishu-body-001",
+      "name": "构建飞书写入Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:batchAdd",
+        "app_toke": "YOUR_APP_TOKEN",
+        "table_id": "YOUR_TABLE_ID",
+        "body": "={{ $json.body }}"
+      },
+      "id": "write-feishu-001",
+      "name": "写入飞书",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Feishu account"
+        }
+      },
+      "notes": "⚠️ 需要修改 app_toke 和 table_id"
+    }
+  ],
+  "connections": {
+    "手动触发（测试用）": {
+      "main": [
+        [
+          {
+            "node": "RSS源1: FreightWaves",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS源2: SupplyChainBrain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS源3: Journal of Commerce",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS源4: The Loadstar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS源5: gCaptain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS源1: FreightWaves": {
+      "main": [
+        [
+          {
+            "node": "合并所有RSS源",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS源2: SupplyChainBrain": {
+      "main": [
+        [
+          {
+            "node": "合并所有RSS源",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS源3: Journal of Commerce": {
+      "main": [
+        [
+          {
+            "node": "合并所有RSS源",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "RSS源4: The Loadstar": {
+      "main": [
+        [
+          {
+            "node": "合并所有RSS源",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "RSS源5: gCaptain": {
+      "main": [
+        [
+          {
+            "node": "合并所有RSS源",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "合并所有RSS源": {
+      "main": [
+        [
+          {
+            "node": "提取和规范化数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取和规范化数据": {
+      "main": [
+        [
+          {
+            "node": "计算热度评分",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "计算热度评分": {
+      "main": [
+        [
+          {
+            "node": "过滤有效数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "过滤有效数据": {
+      "main": [
+        [
+          {
+            "node": "构建飞书写入Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建飞书写入Body": {
+      "main": [
+        [
+          {
+            "node": "写入飞书",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "入门版",
+      "id": "starter"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-11-14T00:00:00.000Z",
+  "versionId": "1.0.0-starter"
+}
