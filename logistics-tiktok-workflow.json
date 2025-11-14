@@ -1,0 +1,376 @@
+{
+  "name": "物流资讯TikTok自动化工作流",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-001",
+      "name": "定时触发（每周一早9点）",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"app_id\": \"YOUR_APP_ID\",\n  \"app_secret\": \"YOUR_APP_SECRET\"\n}",
+        "options": {}
+      },
+      "id": "feishu-auth-001",
+      "name": "获取飞书Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/bitable/v1/apps/YOUR_APP_TOKEN/tables/YOUR_CONFIG_TABLE_ID/records/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.tenant_access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"page_size\": 100}",
+        "options": {}
+      },
+      "id": "read-config-001",
+      "name": "读取配置表",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================================\n// 📋 解析配置并生成RSS源列表\n// ========================================================\n\nconst configData = $input.all();\nif (!configData || configData.length === 0) {\n  throw new Error('⚠️ 未收到配置数据');\n}\n\nconst items = configData[0].json?.data?.items || [];\nconst config = {};\n\nfunction getText(val) {\n  if (!val) return '';\n  if (typeof val === 'string') return val.trim();\n  if (Array.isArray(val) && val[0]?.text) return String(val[0].text).trim();\n  if (typeof val === 'object' && val.text) return String(val.text).trim();\n  return '';\n}\n\n// 解析配置项\nfor (const rec of items) {\n  const f = rec.fields || {};\n  const key = getText(f.config_key);\n  const value = getText(f.config_value);\n  if (key) config[key] = value;\n}\n\nconsole.log('📋 配置加载成功:', JSON.stringify(config, null, 2));\n\n// 解析启用的RSS源（用 | 分隔）\nconst rssFeeds = (config.rss_feeds || '')\n  .split('|')\n  .map(s => s.trim())\n  .filter(Boolean);\n\n// 解析关键词（用 | 分隔）\nconst keywords = (config.keywords || '')\n  .split('|')\n  .map(s => s.trim())\n  .filter(Boolean);\n\nif (rssFeeds.length === 0) {\n  throw new Error('❌ 配置中未找到 rss_feeds');\n}\n\nconsole.log(`✅ 已加载 ${rssFeeds.length} 个RSS源`);\nconsole.log(`✅ 已加载 ${keywords.length} 个关键词`);\n\n// 为每个RSS源生成一个输出项\nconst outputs = rssFeeds.map(url => ({\n  json: {\n    rss_url: url,\n    keywords: keywords,\n    days_back: parseInt(config.days_back) || 7,\n    max_items: parseInt(config.max_items_per_source) || 20,\n    ai_model: config.ai_model || 'gpt-4o-mini',\n    ai_prompt_summary: config.ai_prompt_summary || '请用50字以内总结这条物流新闻的核心要点',\n    ai_prompt_tiktok: config.ai_prompt_tiktok || '请将这条物流新闻改写成60秒TikTok新闻播报脚本，使用滚动字幕形式，语言简洁有力'\n  }\n}));\n\nreturn outputs;"
+      },
+      "id": "parse-config-001",
+      "name": "解析配置",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.rss_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "fetch-rss-001",
+      "name": "拉取RSS内容",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "parseString",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "parse-xml-001",
+      "name": "解析XML",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================================\n// 📰 提取RSS新闻条目并过滤\n// ========================================================\n\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json?.data || item.json || {};\n  const rss = data.rss || data;\n  const channel = rss.channel || rss;\n  const entries = Array.isArray(channel.item) ? channel.item : [channel.item];\n  \n  const keywords = item.json.keywords || [];\n  const daysBack = item.json.days_back || 7;\n  const maxItems = item.json.max_items || 20;\n  \n  const now = Date.now();\n  const timeLimit = daysBack * 24 * 60 * 60 * 1000;\n  \n  let count = 0;\n  \n  for (const entry of entries) {\n    if (!entry || count >= maxItems) break;\n    \n    const title = entry.title || '';\n    const description = entry.description || entry.summary || '';\n    const link = entry.link || entry.guid || '';\n    const pubDate = entry.pubDate || entry.published || '';\n    \n    // 时间过滤\n    let publishTime = new Date(pubDate).getTime();\n    if (isNaN(publishTime)) publishTime = now; // 无法解析时间则视为最新\n    \n    if (now - publishTime > timeLimit) {\n      continue; // 超过时间范围\n    }\n    \n    // 关键词过滤（标题或描述包含任一关键词）\n    const content = (title + ' ' + description).toLowerCase();\n    const matched = keywords.length === 0 || keywords.some(kw => \n      content.includes(kw.toLowerCase())\n    );\n    \n    if (!matched) continue;\n    \n    // 提取数据\n    results.push({\n      json: {\n        title: String(title).substring(0, 500),\n        description: String(description).substring(0, 2000),\n        link: String(link),\n        pub_date: pubDate,\n        source: channel.title || 'Unknown',\n        status: 'pending_ai',\n        keywords: item.json.keywords,\n        ai_model: item.json.ai_model,\n        ai_prompt_summary: item.json.ai_prompt_summary,\n        ai_prompt_tiktok: item.json.ai_prompt_tiktok\n      }\n    });\n    \n    count++;\n  }\n}\n\nconsole.log(`✅ 提取了 ${results.length} 条符合条件的新闻`);\n\nreturn results;"
+      },
+      "id": "extract-filter-001",
+      "name": "提取并过滤新闻",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "deduplicate-001",
+      "name": "去重合并",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 1.2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "hash-001",
+              "name": "content_hash",
+              "value": "={{ $json.title.substring(0, 100) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "add-hash-001",
+      "name": "添加哈希字段",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 🤖 调用AI生成摘要和TikTok脚本\n// ========================================================\n\nconst data = $json;\n\nconst newsTitle = data.title || '';\nconst newsDesc = data.description || '';\nconst fullContent = `标题：${newsTitle}\\n\\n内容：${newsDesc}`;\n\n// 这里需要替换成真实的AI API调用\n// 示例使用占位符，实际应该用 OpenAI/Claude 等节点\n\nconst summary = `[AI摘要] ${newsTitle.substring(0, 50)}...`;\nconst tiktokScript = `📢 物流快讯\\n\\n${newsTitle}\\n\\n[60秒新闻脚本待AI生成]`;\n\nreturn {\n  json: {\n    ...data,\n    ai_summary: summary,\n    tiktok_script: tiktokScript,\n    status: 'ready_for_production'\n  }\n};"
+      },
+      "id": "ai-process-001",
+      "name": "AI生成内容（占位）",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "notes": "⚠️ 这里需要替换成真实的OpenAI或Claude节点"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 🔥 计算新闻热度评分\n// ========================================================\n\nconst data = $json;\n\n// 时效性评分（0-40分）\nconst pubDate = new Date(data.pub_date).getTime();\nconst now = Date.now();\nconst hoursAgo = (now - pubDate) / (1000 * 60 * 60);\nlet timeScore = 0;\nif (hoursAgo < 24) timeScore = 40;\nelse if (hoursAgo < 48) timeScore = 30;\nelse if (hoursAgo < 72) timeScore = 20;\nelse timeScore = 10;\n\n// 关键词匹配度（0-30分）\nconst keywords = data.keywords || [];\nconst content = (data.title + ' ' + data.description).toLowerCase();\nconst matchCount = keywords.filter(kw => content.includes(kw.toLowerCase())).length;\nconst keywordScore = Math.min(matchCount * 10, 30);\n\n// 内容丰富度（0-30分）\nconst contentLength = (data.title + data.description).length;\nlet richScore = 0;\nif (contentLength > 500) richScore = 30;\nelse if (contentLength > 300) richScore = 20;\nelse richScore = 10;\n\n// 总分\nconst hotnessScore = timeScore + keywordScore + richScore;\n\n// 热度等级\nlet hotLevel = 'Low';\nif (hotnessScore >= 80) hotLevel = '🔥极热';\nelse if (hotnessScore >= 60) hotLevel = 'High';\nelse if (hotnessScore >= 40) hotLevel = 'Medium';\n\nreturn {\n  json: {\n    ...data,\n    hotness_score: hotnessScore,\n    hot_level: hotLevel\n  }\n};"
+      },
+      "id": "calc-hotness-001",
+      "name": "计算热度评分",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ========================================================\n// 📦 构建飞书写入Body\n// ========================================================\n\nconst items = $input.all();\n\nfunction sanitize(s) {\n  if (s == null) return '';\n  s = String(s);\n  s = s.replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, ' ');\n  s = s.replace(/\\r\\n?/g, '\\n');\n  return s.trim();\n}\n\nconst records = items.map(it => {\n  const j = it.json || {};\n  return {\n    fields: {\n      \"title\": sanitize(j.title),\n      \"description\": sanitize(j.description),\n      \"link\": sanitize(j.link),\n      \"source\": sanitize(j.source),\n      \"pub_date\": sanitize(j.pub_date),\n      \"ai_summary\": sanitize(j.ai_summary),\n      \"tiktok_script\": sanitize(j.tiktok_script),\n      \"hotness_score\": sanitize(j.hotness_score),\n      \"hot_level\": sanitize(j.hot_level),\n      \"status\": sanitize(j.status || 'ready_for_production')\n    }\n  };\n});\n\n// 分片（每次最多100条）\nfunction chunk(arr, size) {\n  const out = [];\n  for (let i = 0; i < arr.length; i += size) {\n    out.push(arr.slice(i, i + size));\n  }\n  return out;\n}\n\nconst chunks = chunk(records, 100);\n\nconsole.log(`📦 生成 ${chunks.length} 个批次，共 ${records.length} 条`);\n\nreturn chunks.map(part => ({\n  json: {\n    body: JSON.stringify({ records: part })\n  }\n}));"
+      },
+      "id": "build-feishu-body-001",
+      "name": "构建飞书写入Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:batchAdd",
+        "app_toke": "YOUR_APP_TOKEN",
+        "table_id": "YOUR_TABLE_ID",
+        "body": "={{ $json.body }}"
+      },
+      "id": "write-feishu-001",
+      "name": "写入飞书数据表",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        300
+      ],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Feishu account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "定时触发（每周一早9点）": {
+      "main": [
+        [
+          {
+            "node": "获取飞书Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取飞书Token": {
+      "main": [
+        [
+          {
+            "node": "读取配置表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取配置表": {
+      "main": [
+        [
+          {
+            "node": "解析配置",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析配置": {
+      "main": [
+        [
+          {
+            "node": "拉取RSS内容",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "拉取RSS内容": {
+      "main": [
+        [
+          {
+            "node": "解析XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析XML": {
+      "main": [
+        [
+          {
+            "node": "提取并过滤新闻",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取并过滤新闻": {
+      "main": [
+        [
+          {
+            "node": "去重合并",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "去重合并": {
+      "main": [
+        [
+          {
+            "node": "添加哈希字段",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "添加哈希字段": {
+      "main": [
+        [
+          {
+            "node": "AI生成内容（占位）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI生成内容（占位）": {
+      "main": [
+        [
+          {
+            "node": "计算热度评分",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "计算热度评分": {
+      "main": [
+        [
+          {
+            "node": "构建飞书写入Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建飞书写入Body": {
+      "main": [
+        [
+          {
+            "node": "写入飞书数据表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-11-14T00:00:00.000Z",
+  "versionId": "1.0.0"
+}
