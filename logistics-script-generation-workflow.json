@@ -1,0 +1,252 @@
+{
+  "name": "物流资讯脚本生成工作流（异步）",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "logistics-script-trigger",
+        "options": {}
+      },
+      "id": "webhook-trigger-001",
+      "name": "Webhook触发器",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        400
+      ],
+      "webhookId": "auto-generated",
+      "notes": "由主采集工作流或飞书自动化触发"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "combineOperation": "all"
+          },
+          "conditions": [
+            {
+              "id": "score-check",
+              "leftValue": "={{ $json.ai_final_score }}",
+              "rightValue": 8.0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "filter-high-score-002",
+      "name": "过滤：仅处理高分新闻(>8.0)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 📝 病毒式脚本生成提示词（4部分结构）\n// ========================================================\n\nconst item = $json;\n\nconst scriptPrompt = `PERSONA:\n你是一名专业的"口播" (talking head) TikTok 脚本作者。你擅长将复杂的、枯燥的 B2B 物流新闻，转化为极具吸引力、病毒式传播的 60 秒视频。你的语气权威、充满活力，使用简单、直接的语言。\n\nTASK:\n使用提供的"上下文"和"建议的钩子"，编写一个完整的、摄像机就绪的视频脚本。脚本必须遵循 4 部分结构。\n\nCONTEXT:\n{\n  \"title\": \"${item.News_Title || item.title}\",\n  \"summary\": \"${item.AI_Justification || item.ai_justification}\",\n  \"source\": \"${item.Source || item.source_platform}\"\n}\n\nSUGGESTED_HOOK (来自AI评分步骤):\n\"${item.AI_Suggested_Hook || item.ai_suggested_hook}\"\n\nSCRIPT STRUCTURE & RULES:\n1. **HOOK (钩子) (最多 3 秒):** 以"建议的钩子"或其更强的变体开始。它*必须*抓住注意力。使用震撼性陈述或问题。\n2. **BODY - CONTEXT (正文-背景) (最多 20 秒):** 解释发生了*什么*，就像你在向朋友解释一样。"你需要知道的是……"\n3. **BODY - IMPLICATION (正文-影响) (最多 20 秒):** 解释*为什么这对你的受众*（货运代理、电商卖家、仓库经理）*很重要*。"这对你来说意味着……"\n4. **CTA (行动呼吁) (最多 5 秒):** 以一个清晰的行动呼吁结束："我们 24/7 监控此事。关注我们，获取对你真正重要的每日物流新闻。"\n\nOUTPUT FORMAT:\n仅返回脚本。在 [大括号] 中包含视觉提示，以指示屏幕上应显示的文本覆盖层或B-roll建议。\n\nTONE:\n- 使用"你"而不是"他们"\n- 短句（每句5-10个词）\n- 避免行话，使用简单词汇\n- 用数字增强冲击力\n\nEXAMPLE OUTPUT:\n[钩子 - 屏幕文字: "BREAKING"] 联邦快递刚刚暂停了所有欧洲的地面服务。\n\n[正文-背景 - B-roll: 地图动画] 由于法国里昂枢纽发生意外罢工。超过50,000个包裹目前被困。\n\n[正文-影响 - 屏幕文字: "你的包裹?"] 这意味着什么？你所有发往欧盟的包裹都将面临至少7天的延迟。Black Friday订单？受影响。\n\n[CTA - 主持人特写] 我们正在每小时追踪这个情况。关注 @LogisticsAlert 获取枢纽重新开放的第一时间更新。\n\n现在为上述新闻生成脚本：`;\n\nreturn {\n  json: {\n    ...item,\n    script_generation_prompt: scriptPrompt\n  }\n};"
+      },
+      "id": "build-script-prompt-001",
+      "name": "构建病毒式脚本提示词",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "notes": "关键：4部分结构 Hook-Body-CTA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "script-v1-placeholder",
+              "name": "generated_script_v1",
+              "value": "={{ '[钩子] ' + $json.AI_Suggested_Hook + '\\n\\n[正文-背景] ' + $json.AI_Justification + '\\n\\n[正文-影响] 这对物流行业意味着...\\n\\n[CTA] 关注我们，获取每日物流快讯。' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ai-script-generation-placeholder",
+      "name": "AI脚本生成（占位-需替换）",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        300
+      ],
+      "notes": "⚠️ 替换为GPT-4o或Claude-3-Opus节点"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 🔄 准备飞书更新Body\n// ========================================================\n\nconst item = $json;\n\nfunction sanitize(s) {\n  if (s == null) return '';\n  s = String(s);\n  s = s.replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, ' ');\n  s = s.replace(/\\r\\n?/g, '\\n');\n  return s.trim();\n}\n\nconst updateBody = {\n  fields: {\n    \"Generated_Script_v1\": sanitize(item.generated_script_v1),\n    \"Status\": \"Ready_For_Review\"\n  }\n};\n\nreturn {\n  json: {\n    record_id: item.record_id || item.ID,\n    update_body: JSON.stringify(updateBody)\n  }\n};"
+      },
+      "id": "prepare-feishu-update-001",
+      "name": "准备飞书更新Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"app_id\": \"YOUR_APP_ID\",\n  \"app_secret\": \"YOUR_APP_SECRET\"\n}",
+        "options": {}
+      },
+      "id": "feishu-auth-002",
+      "name": "获取飞书Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://open.feishu.cn/open-apis/bitable/v1/apps/YOUR_APP_TOKEN/tables/YOUR_TABLE_ID/records/{{ $('准备飞书更新Body').item.json.record_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.tenant_access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('准备飞书更新Body').item.json.update_body }}",
+        "options": {}
+      },
+      "id": "update-feishu-record-001",
+      "name": "更新飞书记录",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"record_id\": $json.record_id, \"status\": \"Script generated and updated\" } }}",
+        "options": {}
+      },
+      "id": "webhook-response-001",
+      "name": "返回Webhook响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook触发器": {
+      "main": [
+        [
+          {
+            "node": "过滤：仅处理高分新闻(>8.0)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "过滤：仅处理高分新闻(>8.0)": {
+      "main": [
+        [
+          {
+            "node": "构建病毒式脚本提示词",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建病毒式脚本提示词": {
+      "main": [
+        [
+          {
+            "node": "AI脚本生成（占位-需替换）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI脚本生成（占位-需替换）": {
+      "main": [
+        [
+          {
+            "node": "准备飞书更新Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "准备飞书更新Body": {
+      "main": [
+        [
+          {
+            "node": "获取飞书Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取飞书Token": {
+      "main": [
+        [
+          {
+            "node": "更新飞书记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新飞书记录": {
+      "main": [
+        [
+          {
+            "node": "返回Webhook响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-11-14T00:00:00.000Z",
+  "versionId": "1.0.0"
+}

@@ -1,0 +1,699 @@
+{
+  "name": "物流资讯主采集工作流 v2.0 (混合架构)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-001",
+      "name": "定时触发（每15分钟）",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"app_id\": \"YOUR_APP_ID\",\n  \"app_secret\": \"YOUR_APP_SECRET\"\n}",
+        "options": {}
+      },
+      "id": "feishu-auth-001",
+      "name": "获取飞书Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1000,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://YOUR_FRESHRSS_DOMAIN/api/greader.php/reader/api/0/stream/contents/reading-list",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "n",
+              "value": "50"
+            },
+            {
+              "name": "xt",
+              "value": "user/-/state/com.google/read"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "freshrss-fetch-001",
+      "name": "拉取FreshRSS聚合内容",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -800,
+        300
+      ],
+      "notes": "RSS中心：FreightWaves, Loadstar, JOC等"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.scrapfly.io/scrape",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_SCRAPFLY_API_KEY"
+            },
+            {
+              "name": "url",
+              "value": "https://www.maersk.com/news/category/advisories"
+            },
+            {
+              "name": "asp",
+              "value": "true"
+            },
+            {
+              "name": "render_js",
+              "value": "true"
+            },
+            {
+              "name": "extraction_prompt",
+              "value": "Extract all advisory items with title, date, and summary"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "scrapfly-maersk-001",
+      "name": "抓取Maersk公告",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -800,
+        500
+      ],
+      "notes": "高价值：运营警报"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.scrapfly.io/scrape",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_SCRAPFLY_API_KEY"
+            },
+            {
+              "name": "url",
+              "value": "https://www.msc.com/en/newsroom/customer-advisories"
+            },
+            {
+              "name": "asp",
+              "value": "true"
+            },
+            {
+              "name": "render_js",
+              "value": "true"
+            },
+            {
+              "name": "extraction_prompt",
+              "value": "Extract all customer advisories with title, date, and content"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "scrapfly-msc-001",
+      "name": "抓取MSC公告",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -800,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.scrapfly.io/scrape",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_SCRAPFLY_API_KEY"
+            },
+            {
+              "name": "url",
+              "value": "https://www.ups.com/us/en/supplychain/service-alerts"
+            },
+            {
+              "name": "asp",
+              "value": "true"
+            },
+            {
+              "name": "render_js",
+              "value": "true"
+            },
+            {
+              "name": "extraction_prompt",
+              "value": "Extract all service alerts with location, type, and impact details"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "scrapfly-ups-001",
+      "name": "抓取UPS服务警报",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -800,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "merge-all-sources-001",
+      "name": "合并所有数据源",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -600,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ========================================================\n// 📐 数据规范化引擎 (Canonical Data Model)\n// 将所有不同格式的输入统一为单一数据结构\n// ========================================================\n\nconst items = $input.all();\nconst canonical_items = [];\n\nfunction sanitize(s) {\n  if (s == null) return '';\n  s = String(s);\n  s = s.replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, ' ');\n  s = s.replace(/\\r\\n?/g, '\\n');\n  return s.trim();\n}\n\nfor (const item of items) {\n  const json = item.json || {};\n  let canonical = {};\n  \n  // 🔹 识别数据源并映射字段\n  if (json.items && Array.isArray(json.items)) {\n    // FreshRSS格式\n    for (const rssItem of json.items) {\n      canonical = {\n        title: sanitize(rssItem.title),\n        url: sanitize(rssItem.canonical?.[0]?.href || rssItem.alternate?.[0]?.href),\n        content: sanitize(rssItem.summary?.content || rssItem.content?.content),\n        source_platform: sanitize(rssItem.origin?.title || 'FreshRSS'),\n        source_type: 'rss_feed',\n        pub_date: rssItem.published ? new Date(rssItem.published * 1000).toISOString() : new Date().toISOString(),\n        raw_data: JSON.stringify(rssItem)\n      };\n      \n      if (canonical.url && canonical.title) {\n        canonical_items.push({ json: canonical });\n      }\n    }\n  } else if (json.result?.extracted_data) {\n    // Scrapfly格式\n    const extracted = json.result.extracted_data;\n    const dataArray = Array.isArray(extracted) ? extracted : [extracted];\n    \n    for (const scrapeItem of dataArray) {\n      canonical = {\n        title: sanitize(scrapeItem.title || scrapeItem.headline),\n        url: sanitize(json.result.url || scrapeItem.link),\n        content: sanitize(scrapeItem.summary || scrapeItem.content || scrapeItem.description),\n        source_platform: sanitize(scrapeItem.source || new URL(json.result.url).hostname),\n        source_type: 'web_scrape',\n        pub_date: scrapeItem.date || scrapeItem.published_date || new Date().toISOString(),\n        raw_data: JSON.stringify(scrapeItem)\n      };\n      \n      if (canonical.url && canonical.title) {\n        canonical_items.push({ json: canonical });\n      }\n    }\n  }\n}\n\nconsole.log(`✅ 规范化完成: ${canonical_items.length} 条记录`);\n\nreturn canonical_items.length > 0 ? canonical_items : [{ json: { _skip: true } }];"
+      },
+      "id": "normalize-data-001",
+      "name": "数据规范化（统一结构）",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        600
+      ],
+      "notes": "关键步骤：将10+种输入格式统一为canonical_item"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/bitable/v1/apps/YOUR_APP_TOKEN/tables/YOUR_TABLE_ID/records/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('获取飞书Token').item.json.tenant_access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"page_size\": 500 }",
+        "options": {}
+      },
+      "id": "read-existing-urls-001",
+      "name": "读取已存在的URL（去重）",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -200,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ========================================================\n// 🧹 去重过滤器\n// ========================================================\n\nconst newItems = $input.first().json;\nconst existingData = $input.last().json;\n\nconst existingUrls = new Set();\n\nif (existingData?.data?.items) {\n  for (const record of existingData.data.items) {\n    const url = record.fields?.URL;\n    if (url) {\n      // 处理飞书URL字段（可能是数组格式）\n      const urlText = Array.isArray(url) ? url[0]?.text : url;\n      if (urlText) existingUrls.add(urlText);\n    }\n  }\n}\n\nconsole.log(`📊 数据库中已有 ${existingUrls.size} 条URL记录`);\n\nconst filtered = [];\nfor (const item of newItems) {\n  if (item._skip) continue;\n  if (!existingUrls.has(item.url)) {\n    filtered.push({ json: item });\n  }\n}\n\nconsole.log(`✅ 过滤后剩余 ${filtered.length} 条新记录`);\n\nreturn filtered.length > 0 ? filtered : [{ json: { _no_new_items: true } }];"
+      },
+      "id": "dedup-filter-001",
+      "name": "去重过滤",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 🔍 程序化分诊评分 (Triage Scoring)\n// 目的：快速、免费地过滤掉90%的噪音\n// ========================================================\n\nconst item = $json;\nif (item._no_new_items || item._skip) {\n  return { json: item };\n}\n\nlet triage_score = 0;\n\n// 🔹 1. 高价值关键词 (50分)\nconst high_value_keywords = [\n  'STRIKE', '罢工',\n  'PORT CLOSURE', '港口关闭',\n  'SUSPENSION', '暂停',\n  'RATE INCREASE', '运费上涨',\n  'DELAY', '延误',\n  'DISRUPTION', '中断',\n  'EMERGENCY', '紧急',\n  'ALERT', '警报',\n  'FEE CHANGE', '费用变更',\n  'SERVICE UPDATE', '服务更新',\n  'TARIFF', '关税',\n  'CUSTOMS', '海关'\n];\n\nconst titleUpper = (item.title || '').toUpperCase();\nconst contentUpper = (item.content || '').toUpperCase();\nconst fullText = titleUpper + ' ' + contentUpper;\n\nconst matchedKeywords = high_value_keywords.filter(k => fullText.includes(k));\nif (matchedKeywords.length > 0) {\n  triage_score += Math.min(matchedKeywords.length * 15, 50);\n}\n\n// 🔹 2. 高价值来源 (40分)\nconst high_value_sources = [\n  'maersk.com',\n  'msc.com',\n  'cma-cgm.com',\n  'ups.com',\n  'fedex.com',\n  'dhl.com',\n  'amazon.com/seller',\n  'shopify.com/changelog'\n];\n\nconst source = (item.source_platform || '').toLowerCase();\nif (high_value_sources.some(s => source.includes(s))) {\n  triage_score += 40;\n}\n\n// 🔹 3. Web Scrape优先（专有数据）(30分)\nif (item.source_type === 'web_scrape') {\n  triage_score += 30;\n}\n\n// 🔹 4. 内容丰富度 (10分)\nif (item.content && item.content.length > 500) {\n  triage_score += 10;\n}\n\n// 🔹 5. 时效性（新鲜度）\nconst pubDate = new Date(item.pub_date);\nconst hoursAgo = (Date.now() - pubDate.getTime()) / (1000 * 60 * 60);\nif (hoursAgo < 24) {\n  triage_score += 10;\n} else if (hoursAgo < 72) {\n  triage_score += 5;\n}\n\nreturn {\n  json: {\n    ...item,\n    triage_score: Math.min(triage_score, 100),\n    matched_keywords: matchedKeywords.join(', ')\n  }\n};"
+      },
+      "id": "triage-scoring-001",
+      "name": "程序化分诊评分（快速筛选）",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        600
+      ],
+      "notes": "目标：用0成本快速过滤90%噪音"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "combineOperation": "all"
+          },
+          "conditions": [
+            {
+              "id": "triage-threshold",
+              "leftValue": "={{ $json.triage_score }}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "not-skip",
+              "leftValue": "={{ $json._no_new_items }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "filter-high-score-001",
+      "name": "过滤：仅保留高分(>50)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 📝 生成AI摘要提示词\n// ========================================================\n\nconst item = $json;\n\nconst prompt = `你是一名专业的物流行业分析师。请将以下新闻总结为100字以内的事实性、中立性摘要。\n\n标题：${item.title}\n来源：${item.source_platform}\n内容：${item.content.substring(0, 2000)}\n\n要求：\n1. 只陈述事实，不要加入评论\n2. 突出关键数字、地点、公司名称\n3. 100字以内\n4. 用中文输出`;\n\nreturn {\n  json: {\n    ...item,\n    ai_summary_prompt: prompt\n  }\n};"
+      },
+      "id": "build-summary-prompt-001",
+      "name": "构建AI摘要提示词",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ai-summary-placeholder",
+              "name": "ai_summary",
+              "value": "={{ $json.title.substring(0, 100) + '...' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ai-summary-placeholder-001",
+      "name": "AI摘要（占位-需替换为真实AI节点）",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        500
+      ],
+      "notes": "⚠️ 替换为OpenAI/Claude节点"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ========================================================\n// 🤖 AI深度评分提示词生成器（JSON Schema约束）\n// ========================================================\n\nconst item = $json;\n\nconst scoringPrompt = `PERSONA:\n你是一名专业的 B2B 物流分析师，同时也是一名病毒式社交媒体新闻制作人。你的受众是航运、货运和电子商务领域忙碌的专业人士。\n\nTASK:\n分析以下新闻摘要。根据你的专业知识，评估其制作成 60 秒"突发新闻"TikTok 视频的适宜性。你必须根据四个明确的标准对其进行评级，并以严格的 JSON 格式返回你的分析。\n\nCONTEXT:\n{\n  \"title\": \"${item.title.replace(/\"/g, '\\\\'')}\",\n  \"summary\": \"${item.ai_summary.replace(/\"/g, '\\\\'')}\",\n  \"source\": \"${item.source_platform}\",\n  \"matched_keywords\": \"${item.matched_keywords || ''}\"\n}\n\nSCORING CRITERIA:\n1. **Impact (影响力) (1-10):** 对全球供应链的影响有多大？ (1 = 微不足道, 10 = 巨大干扰，例如苏伊士运河堵塞)。\n2. **Urgency (紧迫性) (1-5):** 这条信息的紧迫程度如何？ (1 = 了解即可, 5 = 今天必须采取行动)。\n3. **Virality (传播潜力) (1-5):** 这条新闻有多"震撼"或"令人惊讶"？它是否有一个强大的钩子？ (1 = 枯燥, 5 = "哇"因子)。\n4. **Relatability (相关性) (1-5):** 这与普通的货运代理、仓库经理或亚马逊卖家的相关性如何？ (1 = 纯学术, 5 = 直接影响他们的日常工作)。\n\nOUTPUT INSTRUCTIONS:\n仅返回一个有效的 JSON 对象，严格遵循以下格式：\n{\n  \"impact_score\": <number 1-10>,\n  \"urgency_score\": <number 1-5>,\n  \"virality_score\": <number 1-5>,\n  \"relatability_score\": <number 1-5>,\n  \"final_score\": <number, 计算公式: (Impact*0.4) + (Urgency*0.3) + (Virality*0.2) + (Relatability*0.1)>,\n  \"justification\": \"<对最终分数的简短理由陈述，50字以内>\",\n  \"suggested_hook\": \"<从新闻中提取的最强'钩子'，10个词以内>\"\n}`;\n\nreturn {\n  json: {\n    ...item,\n    ai_scoring_prompt: scoringPrompt\n  }\n};"
+      },
+      "id": "build-scoring-prompt-001",
+      "name": "构建AI深度评分提示词",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        500
+      ],
+      "notes": "关键：JSON Schema约束输出"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ai-scores-placeholder",
+              "name": "ai_final_score",
+              "value": "={{ Math.min($json.triage_score / 10, 10) }}",
+              "type": "number"
+            },
+            {
+              "id": "impact-placeholder",
+              "name": "ai_impact_score",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "urgency-placeholder",
+              "name": "ai_urgency_score",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "virality-placeholder",
+              "name": "ai_virality_score",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "relatability-placeholder",
+              "name": "ai_relatability_score",
+              "value": 4,
+              "type": "number"
+            },
+            {
+              "id": "justification-placeholder",
+              "name": "ai_justification",
+              "value": "={{ '[AI分析] ' + $json.title.substring(0, 50) + '...' }}",
+              "type": "string"
+            },
+            {
+              "id": "hook-placeholder",
+              "name": "ai_suggested_hook",
+              "value": "={{ $json.title.split(' ').slice(0, 8).join(' ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ai-scoring-placeholder-001",
+      "name": "AI深度评分（占位-需替换）",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        500
+      ],
+      "notes": "⚠️ 替换为Gemini/Claude节点，启用JSON模式"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ========================================================\n// 📦 构建飞书写入Body（批量）\n// ========================================================\n\nconst items = $input.all();\n\nfunction sanitize(s) {\n  if (s == null) return '';\n  s = String(s);\n  s = s.replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, ' ');\n  s = s.replace(/\\r\\n?/g, '\\n');\n  return s.trim();\n}\n\nconst records = items.map(it => {\n  const j = it.json || {};\n  return {\n    fields: {\n      \"News_Title\": sanitize(j.title),\n      \"Source\": sanitize(j.source_platform),\n      \"URL\": sanitize(j.url),\n      \"Received_At\": new Date().toISOString(),\n      \"Status\": \"Pending\",\n      \"AI_Triage_Score\": Number(j.triage_score) || 0,\n      \"AI_Final_Score\": Number(j.ai_final_score) || 0,\n      \"AI_Justification\": sanitize(j.ai_justification),\n      \"AI_Suggested_Hook\": sanitize(j.ai_suggested_hook),\n      \"Keywords\": sanitize(j.matched_keywords)\n    }\n  };\n});\n\nfunction chunk(arr, size) {\n  const out = [];\n  for (let i = 0; i < arr.length; i += size) {\n    out.push(arr.slice(i, i + size));\n  }\n  return out;\n}\n\nconst chunks = chunk(records, 100);\n\nconsole.log(`📦 准备写入 ${chunks.length} 个批次，共 ${records.length} 条`);\n\nreturn chunks.map(part => ({\n  json: {\n    body: JSON.stringify({ records: part })\n  }\n}));"
+      },
+      "id": "build-feishu-write-001",
+      "name": "构建飞书写入Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:batchAdd",
+        "app_toke": "YOUR_APP_TOKEN",
+        "table_id": "YOUR_TABLE_ID",
+        "body": "={{ $json.body }}"
+      },
+      "id": "write-to-feishu-001",
+      "name": "写入飞书任务控制中心",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        500
+      ],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Feishu account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "定时触发（每15分钟）": {
+      "main": [
+        [
+          {
+            "node": "获取飞书Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取飞书Token": {
+      "main": [
+        [
+          {
+            "node": "拉取FreshRSS聚合内容",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "抓取Maersk公告",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "抓取MSC公告",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "抓取UPS服务警报",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "拉取FreshRSS聚合内容": {
+      "main": [
+        [
+          {
+            "node": "合并所有数据源",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓取Maersk公告": {
+      "main": [
+        [
+          {
+            "node": "合并所有数据源",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "抓取MSC公告": {
+      "main": [
+        [
+          {
+            "node": "合并所有数据源",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "抓取UPS服务警报": {
+      "main": [
+        [
+          {
+            "node": "合并所有数据源",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "合并所有数据源": {
+      "main": [
+        [
+          {
+            "node": "数据规范化（统一结构）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "数据规范化（统一结构）": {
+      "main": [
+        [
+          {
+            "node": "读取已存在的URL（去重）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取已存在的URL（去重）": {
+      "main": [
+        [
+          {
+            "node": "去重过滤",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "去重过滤": {
+      "main": [
+        [
+          {
+            "node": "程序化分诊评分（快速筛选）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "程序化分诊评分（快速筛选）": {
+      "main": [
+        [
+          {
+            "node": "过滤：仅保留高分(>50)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "过滤：仅保留高分(>50)": {
+      "main": [
+        [
+          {
+            "node": "构建AI摘要提示词",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建AI摘要提示词": {
+      "main": [
+        [
+          {
+            "node": "AI摘要（占位-需替换为真实AI节点）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI摘要（占位-需替换为真实AI节点）": {
+      "main": [
+        [
+          {
+            "node": "构建AI深度评分提示词",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建AI深度评分提示词": {
+      "main": [
+        [
+          {
+            "node": "AI深度评分（占位-需替换）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI深度评分（占位-需替换）": {
+      "main": [
+        [
+          {
+            "node": "构建飞书写入Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建飞书写入Body": {
+      "main": [
+        [
+          {
+            "node": "写入飞书任务控制中心",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-11-14T00:00:00.000Z",
+  "versionId": "2.0.0"
+}
